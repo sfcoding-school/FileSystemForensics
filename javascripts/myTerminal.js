@@ -109,7 +109,11 @@ function cd(commands, term){
       term.echo(output);
       return;
     } else {
-        // term.echo("hai scritto cd per path: " + commands[0]);
+       if (commands[0] == "~") {
+          currentFolder = "~";
+          term.push(what_to_do, {prompt: '[[b;#5fff00;#000]user]:[[b;#af00ff;#000]' + currentFolder + ']$ '});
+          return;
+        }
 
         if (commands[0].indexOf("..") > -1) {
             if (commands[0] == ".." || commands[0] == "../") {
