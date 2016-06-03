@@ -54,9 +54,22 @@ function goToCurrentFolder(){
 function checkExistingPath(path){
   c_t = currentFolder + "/" + path;
   if(goToCurrentFolder_recursive(c_t.split("/").slice(1, c_t.length), global_json["FileSystem"]) === false)
-    return false;
+  return false;
   else
-    return true;
+  return true;
+}
+
+function findFolder(){
+  var tab_help = [];
+
+  jsonC = goToCurrentFolder();
+  for (var i = 0; i < jsonC.length; i++) {
+    if (jsonC[i]["isDirectory"] === true){
+      tab_help.push(jsonC[i]["nome"]);
+    }
+  }
+  return tab_help;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,14 +77,28 @@ function checkExistingPath(path){
 ////////////////////////////////////////////////////////////////////////////////
 
 function ls(commands, term){
-  if (commands.length > 1){
+  console.log(commands.length);
+  if (commands.length > 2){
     term.error("I don't understand this. Try ls --help");
     return;
   }
+  var long_list_format = false;
+  if (commands.length > 0){
+    if(commands[0]=="-l") {
+      long_list_format = true;
+      commands = commands.slice(1, commands.length);
+    } else if(commands[1]=="-l" ){
+      long_list_format = true;
+      commands = commands.slice(0, -1);
+    }
+  }
+
+  console.log(commands[0] + " " + commands.length);
+
   if (commands[0] == "--help" ) {
     var output = "Use: ls [OPZIONE]... [FILE]...\n";
     output += "List information about the current directory\n";
-    output += "Currently there are not available options";
+    output += " -l\tuse a long listing format\n";
     term.echo(output);
     return;
   } else if(commands.length === 0){
@@ -84,10 +111,17 @@ function ls(commands, term){
       var myOut = "";
       for (var i = 0; i < jsonC.length; i++) {
 
-        if (jsonC[i]["isDirectory"] === true)
-        myOut += '[[b;#0080FF;#000]' + jsonC[i]["nome"] + ']\n'
-        else
-        myOut += jsonC[i]["nome"].padding(30) + "\t(" + jsonC[i]["lastModDate"] + ")\r\n";
+        if (jsonC[i]["isDirectory"] === true){
+          myOut += '[[b;#0080FF;#000]' + jsonC[i]["nome"] + ']\n';
+        } else {
+          myOut += jsonC[i]["nome"].padding(30);
+          if (long_list_format) {
+            myOut += "\t" + (jsonC[i]["Byte"].toString() + "B").padding(8) + "\t(" + jsonC[i]["lastModDate"] + ")\r\n";
+          } else {
+             myOut += "\r\n";
+          }
+
+        }
       }
       term.echo(myOut);
     }
@@ -140,6 +174,13 @@ function cd(commands, term){
       return;
     }
 
+
+    // serve a rimuovere eventuale "/" in fondo
+    if (commands[0][commands[0].length-1] == "/") {
+      commands[0] = commands[0].slice(0, -1);
+    }
+
+    //
     if (checkExistingPath(commands[0])) {
       currentFolder = currentFolder + "/" + commands[0].replace(/#/g, "\\ ");
       term.push(what_to_do, {prompt: '[[b;#5fff00;#000]user]:[[b;#af00ff;#000]' + currentFolder + ']$ '});
@@ -163,13 +204,25 @@ function cd(commands, term){
 
 function help(term){
   var output = "List of commands\n";
-  output += "Digit \"[name] --help\" to learn more about the function [name]";
-  output += "\n\n";
+  output += "Digit \"[name] --help\" to learn more about the function [name]\n";
+  output += "\n";
   output += "clear".padding(5) + "\tClear the terminal screen\n";
   output += "ls".padding(5) + "\tList information about the current directory\n";
   output += "cd".padding(5) + "\tChange Directory\n";
   output += "pwd".padding(5) + "\tPrint name of current/working directory\n";
   output += "hash".padding(5) + "\tShow hash of the current File System\n";
+  term.echo(output);
+}
+
+function info(term){
+  var output = "Information about the current build, extracted from system properties\n";
+  output += "\n";
+  output += "Model: " + global_json["MODEL"].padding(20) + "\t";
+  output += "Device: " + global_json["DEVICE"].padding(20) + "\t"; /*Codename*/
+  output += "Manufacturer: " + global_json["MANUFACTURER"] + "\n";
+  output += "Build Number: " + global_json["BUILDN"].padding(13) + "\t"; /*Build Number*/
+  output += "Serial: " + global_json["SERIAL"].padding(20) + "\t";
+  output += "Brand: " + global_json["BRAND"] + "\n";
   term.echo(output);
 }
 
@@ -181,5 +234,6 @@ function manager(command, term){
   else if (commands[0] == "cd") cd(commands.slice(1, commands.length), term);
   else if (commands[0] == "pwd") term.echo(currentFolder);
   else if (commands[0] == "hash") term.echo("The current FileSystem has hash: " + global_json["sha1"]);
+  else if (commands[0] == "info") info(term);
   else term.echo("Your command doesn't exists. Try to type: help");
 }

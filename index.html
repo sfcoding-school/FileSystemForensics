@@ -37,7 +37,14 @@ jQuery(function($, undefined) {
         greetings: 'Filesystemforensics Bash',
         name: 'js_demo',
         height: 600,
-        prompt: '[[b;#5fff00;#000]user]:[[b;#af00ff;#000]~]$ '
+        prompt: '[[b;#5fff00;#000]user]:[[b;#af00ff;#000]~]$ ',
+        exit: false,
+        tabcompletion: true,
+        completion: function(terminal, command, callback) {
+            if (terminal.get_command().indexOf("cd") > -1) {
+                callback(findFolder());
+            }
+          }
     });
 });
 
