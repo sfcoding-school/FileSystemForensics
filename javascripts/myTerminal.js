@@ -211,6 +211,7 @@ function help(term){
   output += "cd".padding(5) + "\tChange Directory\n";
   output += "pwd".padding(5) + "\tPrint name of current/working directory\n";
   output += "hash".padding(5) + "\tShow hash of the current File System\n";
+  output += "info".padding(5) + "\tShow Information about the current Phone\n";
   term.echo(output);
 }
 
