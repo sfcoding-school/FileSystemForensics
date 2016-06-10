@@ -70,7 +70,9 @@ class S(BaseHTTPRequestHandler):
 
             try:
                 dir = os.path.dirname(__file__)
-                print dir == ""
+                if dir == "":
+                    dir = os.getcwd()
+
                 print "args[cmd]", args["cmd"][0]
 
                 if args["cmd"][0] == "list":
@@ -79,7 +81,7 @@ class S(BaseHTTPRequestHandler):
                     self.wfile.write(readInfo(args["id"][0]))
                 elif args["cmd"][0] == "getfs":
 
-                    with open(os.getcwd() + "/DB/" + args["id"][0]) as data_file:
+                    with open(dir + "/DB/" + args["id"][0]) as data_file:
                         d3 = json.dumps(json.load(data_file))
                         # print d3
                         self.wfile.write(d3)
@@ -108,10 +110,11 @@ class S(BaseHTTPRequestHandler):
         # print file_content
         # json_data = json.loads(file_content)
         dir = os.path.dirname(__file__)
+        if dir == "":
+            dir = os.getcwd()
 
         try:
             json_data['BRAND']
-
 
             print json_data['SERIAL'] + "   " + json_data['sha1']
 
@@ -163,8 +166,9 @@ class S(BaseHTTPRequestHandler):
 
 
 def makeDownlodableFile(path):
-    #dir = os.getcwd()
     dir = os.path.dirname(__file__)
+    if dir == "":
+        dir = os.getcwd()
 
     FILEPATH = os.path.dirname(dir) + path
     with open(FILEPATH, 'rb') as f:
@@ -178,8 +182,10 @@ def makeDownlodableFile(path):
 
 
 def listAllDevice():
-    #dir = os.getcwd()
     dir = os.path.dirname(__file__)
+    if dir == "":
+        dir = os.getcwd()
+
     print "listAllDevice", dir, os.path.exists(dir + "/DB/")
     lst = os.listdir(dir + "/DB/")
     to_return = ""
@@ -189,8 +195,10 @@ def listAllDevice():
 
 
 def readInfo(id_device):
-    #dir = os.getcwd()
     dir = os.path.dirname(__file__)
+    if dir == "":
+        dir = os.getcwd()
+
     print "readInfo", dir, os.path.exists(dir+'/DB/'+id_device+"/info.csv")
     try:
         if os.path.isfile(dir+'/DB/'+id_device+"/info.csv"):
