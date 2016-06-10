@@ -72,19 +72,24 @@ function findFolder(){
 
 }
 
+function formatTime(unixTimeStamp) {
+  var dateTime = new Date(unixTimeStamp*1000);
+  return dateTime.toISOString().replace("T", " "); // Returns "2013-05-31T11:54:44.000Z";
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// COMMANDS /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 function takeAll(term){
   $.ajax({
-       async: false,
-       type: 'GET',
-       url: "http://127.0.0.1:8000/terminal?id=x&cmd=takeAll",
-       success: function(data, status){
-               console.log("here")
-              //  term.echo("request send");
-       }
+    async: false,
+    type: 'GET',
+    url: "http://127.0.0.1:8000/terminal?id=x&cmd=takeAll",
+    success: function(data, status){
+      console.log("here")
+      //  term.echo("request send");
+    }
   });
 }
 
@@ -130,7 +135,7 @@ function ls(commands, term){
           if (long_list_format) {
             myOut += "\t" + (jsonC[i]["Byte"].toString() + "B").padding(8) + "\t(" + jsonC[i]["lastModDate"] + ")\r\n";
           } else {
-             myOut += "\r\n";
+            myOut += "\r\n";
           }
 
         }
@@ -240,7 +245,32 @@ function info(term){
   term.echo(output);
 }
 
+function list(term){
+  $.ajax({
+    async: false,
+    type: 'GET',
+    url: "http://127.0.0.1:8001/terminal?cmd=list",
+    success: function(data, status){
+      console.log("here")
+      //  term.echo("request send");
+    }
+  });
+}
+
 function manager(command, term){
+  console.log(command);
+  if (command === "") {
+    return;
+  }
+  if (command == "list") {
+    list(term);
+    return;
+  }
+  if (global_json === undefined) {
+    term.echo("Non hai caricato nessun FileSystem. Usa \"list\" o \"help\"")
+    return;
+  }
+
   var commands = command.split(" ").clean("");
 
   if (commands[0] == "help") help(term);

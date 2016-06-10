@@ -70,11 +70,15 @@ class S(BaseHTTPRequestHandler):
 
             try:
                 print "args[cmd]", args["cmd"][0]
-                q.put("ls:" + args["cmd"][0])
-                print "done"
-                aaaa = b.get()
-                self.wfile.write(aaaa)
-                b.task_done()
+
+                if args["cmd"][0] == "list":
+                    self.wfile.write(listAllDevice())
+                else:
+                    q.put("ls:" + args["cmd"][0])
+                    print "done"
+                    aaaa = b.get()
+                    self.wfile.write(aaaa)
+                    b.task_done()
 
             except Exception, e:
                 print e
@@ -90,13 +94,13 @@ class S(BaseHTTPRequestHandler):
 
         # Do what you wish with file_content
 
-        #print file_content
+        # print file_content
         #json_data = json.loads(file_content)
         dir = os.path.dirname(__file__)
 
         try:
             json_data['BRAND']
-            
+
 
             print json_data['SERIAL'] + "   " + json_data['sha1']
 
@@ -108,7 +112,7 @@ class S(BaseHTTPRequestHandler):
                 print 'creo file info'
                 with open(dir+'/DB/'+json_data['SERIAL']+"/info.csv", 'w+') as menu:
                     wr1 = csv.writer(menu, dialect="excel")
-                    wr1.writerow([json_data['DEVICE'], json_data['MANUFACTURER'], 
+                    wr1.writerow([json_data['DEVICE'], json_data['MANUFACTURER'],
                         json_data['SERIAL'], json_data['BRAND'],json_data['BUILDN']])
                 menu.close()
 
@@ -135,7 +139,7 @@ class S(BaseHTTPRequestHandler):
             # ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
             # print ctype, pdict
             # self.wfile.write("OK")
-            
+
         except Exception, e:
             #print json_data['BYTE_ARRAY']
             print len(file_content)
@@ -146,7 +150,14 @@ class S(BaseHTTPRequestHandler):
             with open(dir+'/DB/'+id_device+'/file/'+filename +'.zip', 'wb') as output:
                 output.write(file_content)
 
-        
+
+def listAllDevice():
+
+    dir = os.getcwd()
+    print "listAllDevice", dir, os.path.exists(dir + "/DB/")
+    lst = os.listdir(dir + "/DB/")
+    print lst
+
 
 def readInfo(id_device):
     dir = os.path.dirname(__file__)
@@ -168,7 +179,7 @@ def readInfo(id_device):
 
 
 def runssss(asd):
-    server_address = ('', 8000)
+    server_address = ('', 8001)
     httpd = HTTPServer(server_address, S)
     print 'Starting httpd...'
     httpd.serve_forever()
