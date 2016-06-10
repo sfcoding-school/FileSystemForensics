@@ -74,11 +74,12 @@ class S(BaseHTTPRequestHandler):
                 if args["cmd"][0] == "list":
                     self.wfile.write(listAllDevice())
                 elif args["cmd"][0] == "getjson":
-                    self.wfile.write( readInfo(args["id"][0]))
+                    self.wfile.write(readInfo(args["id"][0]))
                 elif args["cmd"][0] == "getfs":
                     with open(os.getcwd() + "/DB/" + args["id"][0]) as data_file:
-                        self.wfile.write(json.load(data_file))
-                        print data_file
+                        d3 = json.dumps(json.load(data_file))
+                        # print d3
+                        self.wfile.write(d3)
                 else:
                     q.put("ls:" + args["cmd"][0])
                     print "done"

@@ -312,15 +312,15 @@ function manager(command, term){
   if (commands[0] == "choose" && commands.length > 1) {
     term.echo("Hai scelto " + commands[1] + " " + possibility[commands[1]]);
     term.echo(possibilityOfWho + "/" + commands[1])
+
     $.ajax({
       async: false,
       type: 'GET',
       url: "http://127.0.0.1:8001/terminal?cmd=getfs&id=" + possibilityOfWho + "/" + possibility[commands[1]],
       success: function(data, status){
         console.log("takeFileSystemJson callback " + data)
-        global_json = data.replace(/u'(?=[^:]+')/g, "'");
+        global_json = JSON.parse(data);
         term.echo("Loading Complete")
-        console.log(global_json["FileSystem"]);
         console.log(global_json["sha1"]);
       }
     });
