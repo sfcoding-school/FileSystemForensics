@@ -264,21 +264,73 @@ function list(term){
   });
 }
 
+var possibilityOfWho = "";
+var possibility = [];
+
+function takeFileSystemJson(who, term){
+  possibilityOfWho = who;
+  $.ajax({
+    async: false,
+    type: 'GET',
+    url: "http://127.0.0.1:8001/terminal?cmd=getjson&id=" + who,
+    success: function(data, status){
+      console.log("takeFileSystemJson callback " + data)
+      if (data != "err") {
+        var out = "";
+        lista_t = JSON.parse(data);//JSON.stringify(eval("(" + data + ")"));
+        lista_t = lista_t["lista"];
+        for (var i = 0; i < lista_t.length; i++) {
+          var temp = lista_t[i].split(":");
+          out += i + "-> " + temp[0] + "\t" + formatTime(temp[1]) + "\n";
+          possibility.push(temp[0]);
+        }
+        term.echo(out);
+        term.echo("Use the command \"choose [NUM]\" to choose one of the above FileSystem");
+      } else {
+        term.echo("there has been some problem");
+      }
+    }
+  });
+}
+
 function manager(command, term){
   console.log(command);
   if (command === "") {
     return;
   }
-  if (command == "list") {
-    list(term);
+
+  var commands = command.split(" ").clean("");
+  if (commands[0] == "list") {
+    if (commands.length == 1) {
+      list(term);
+    } else {
+      takeFileSystemJson(commands[1], term);
+    }
     return;
   }
+
+  if (commands[0] == "choose" && commands.length > 1) {
+    term.echo("Hai scelto " + commands[1] + " " + possibility[commands[1]]);
+    term.echo(possibilityOfWho + "/" + commands[1])
+    $.ajax({
+      async: false,
+      type: 'GET',
+      url: "http://127.0.0.1:8001/terminal?cmd=getfs&id=" + possibilityOfWho + "/" + possibility[commands[1]],
+      success: function(data, status){
+        console.log("takeFileSystemJson callback " + data)
+        global_json = data.replace(/u'(?=[^:]+')/g, "'");
+        term.echo("Loading Complete")
+        console.log(global_json["FileSystem"]);
+        console.log(global_json["sha1"]);
+      }
+    });
+    return;
+  }
+
   if (global_json === undefined) {
     term.echo("Non hai caricato nessun FileSystem. Usa \"list\" o \"help\"")
     return;
   }
-
-  var commands = command.split(" ").clean("");
 
   if (commands[0] == "help") help(term);
   else if (commands[0] == "ls") ls(commands.slice(1, commands.length), term);

@@ -73,6 +73,12 @@ class S(BaseHTTPRequestHandler):
 
                 if args["cmd"][0] == "list":
                     self.wfile.write(listAllDevice())
+                elif args["cmd"][0] == "getjson":
+                    self.wfile.write( readInfo(args["id"][0]))
+                elif args["cmd"][0] == "getfs":
+                    with open(os.getcwd() + "/DB/" + args["id"][0]) as data_file:
+                        self.wfile.write(json.load(data_file))
+                        print data_file
                 else:
                     q.put("ls:" + args["cmd"][0])
                     print "done"
@@ -152,7 +158,7 @@ class S(BaseHTTPRequestHandler):
 
 
 def makeDownlodableFile(path):
-    dir = os.path.dirname(__file__)
+    dir = os.getcwd()  # os.path.dirname(__file__)
     FILEPATH = os.path.dirname(dir) + path
     with open(FILEPATH, 'rb') as f:
         self.send_response(200)
@@ -164,10 +170,7 @@ def makeDownlodableFile(path):
         shutil.copyfileobj(f, self.wfile)
 
 
-
-
 def listAllDevice():
-
     dir = os.getcwd()
     print "listAllDevice", dir, os.path.exists(dir + "/DB/")
     lst = os.listdir(dir + "/DB/")
@@ -178,22 +181,29 @@ def listAllDevice():
 
 
 def readInfo(id_device):
-    dir = os.path.dirname(__file__)
-    if os.path.isfile(dir+'/DB/'+id_device+"/info.csv"):
-        print 'carico le info'
-        Flag_primo = True
-        data = {}
-        lista = []
-        with open(dir+'/DB/'+id_device+"/info.csv") as read:
-            for line in csv.reader(read, dialect="excel"):
-                if Flag_primo:
-                    data['info'] = line
-                    Flag_primo = False
-                else:
-                    lista.append(str(line[0]+":"+line[1]))
+    dir = os.getcwd()  # os.path.dirname(__file__)
+    print "readInfo", dir, os.path.exists(dir+'/DB/'+id_device+"/info.csv")
+    try:
+        if os.path.isfile(dir+'/DB/'+id_device+"/info.csv"):
+            print 'carico le info'
+            Flag_primo = True
+            data = {}
+            lista = []
+            with open(dir+'/DB/'+id_device+"/info.csv") as read:
+                for line in csv.reader(read, dialect="excel"):
+                    if Flag_primo:
+                        data['info'] = line
+                        Flag_primo = False
+                    else:
+                        lista.append(str(line[0]+":"+line[1]))
 
-        data['lista']=lista
-        return json.dumps(data)
+            data['lista'] = lista
+            print "readInfo:return"
+            return json.dumps(data)
+        else:
+            print "some error, the path doesnt exists"
+    except Exception as e:
+        return "err"
 
 
 def runssss(asd):
