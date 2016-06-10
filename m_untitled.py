@@ -151,6 +151,21 @@ class S(BaseHTTPRequestHandler):
                 output.write(file_content)
 
 
+def makeDownlodableFile(path):
+    dir = os.path.dirname(__file__)
+    FILEPATH = os.path.dirname(dir) + path
+    with open(FILEPATH, 'rb') as f:
+        self.send_response(200)
+        self.send_header("Content-Type", 'application/octet-stream')
+        self.send_header("Content-Disposition", 'attachment; filename="{}"'.format(os.path.basename(FILEPATH)))
+        fs = os.fstat(f.fileno())
+        self.send_header("Content-Length", str(fs.st_size))
+        self.end_headers()
+        shutil.copyfileobj(f, self.wfile)
+
+
+
+
 def listAllDevice():
 
     dir = os.getcwd()
