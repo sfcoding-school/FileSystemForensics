@@ -156,7 +156,10 @@ def listAllDevice():
     dir = os.getcwd()
     print "listAllDevice", dir, os.path.exists(dir + "/DB/")
     lst = os.listdir(dir + "/DB/")
-    print lst
+    to_return = ""
+    for a in lst:
+        to_return += a + ":"
+    return to_return
 
 
 def readInfo(id_device):
