@@ -69,6 +69,7 @@ class S(BaseHTTPRequestHandler):
                 i += 1
 
             try:
+                dir = os.path.dirname(__file__)
                 print "args[cmd]", args["cmd"][0]
 
                 if args["cmd"][0] == "list":
@@ -76,9 +77,11 @@ class S(BaseHTTPRequestHandler):
                 elif args["cmd"][0] == "getjson":
                     self.wfile.write( readInfo(args["id"][0]))
                 elif args["cmd"][0] == "getfs":
-                    with open(os.getcwd() + "/DB/" + args["id"][0]) as data_file:
-                        self.wfile.write(json.load(data_file))
-                        print data_file
+                    with open(dir + "/DB/" + args["id"][0]) as data_file:
+                        jjj = json.load(data_file)
+                        print json.dumps(jjj)
+                        self.wfile.write(json.dumps(jjj))
+                        
                 else:
                     q.put("ls:" + args["cmd"][0])
                     print "done"
@@ -158,7 +161,8 @@ class S(BaseHTTPRequestHandler):
 
 
 def makeDownlodableFile(path):
-    dir = os.getcwd()  # os.path.dirname(__file__)
+    #dir = os.getcwd()  
+    dir = os.path.dirname(__file__)
     FILEPATH = os.path.dirname(dir) + path
     with open(FILEPATH, 'rb') as f:
         self.send_response(200)
@@ -171,7 +175,8 @@ def makeDownlodableFile(path):
 
 
 def listAllDevice():
-    dir = os.getcwd()
+    #dir = os.getcwd()
+    dir = os.path.dirname(__file__)
     print "listAllDevice", dir, os.path.exists(dir + "/DB/")
     lst = os.listdir(dir + "/DB/")
     to_return = ""
@@ -181,7 +186,8 @@ def listAllDevice():
 
 
 def readInfo(id_device):
-    dir = os.getcwd()  # os.path.dirname(__file__)
+    #dir = os.getcwd()  
+    dir = os.path.dirname(__file__)
     print "readInfo", dir, os.path.exists(dir+'/DB/'+id_device+"/info.csv")
     try:
         if os.path.isfile(dir+'/DB/'+id_device+"/info.csv"):

@@ -126,6 +126,7 @@ function ls(commands, term){
       // term.echo("Sha: " + global_json["sha1"]);
       jsonC = goToCurrentFolder();
       var myOut = "";
+
       for (var i = 0; i < jsonC.length; i++) {
 
         if (jsonC[i]["isDirectory"] === true){
