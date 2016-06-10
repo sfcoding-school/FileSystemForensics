@@ -252,7 +252,14 @@ function list(term){
     url: "http://127.0.0.1:8001/terminal?cmd=list",
     success: function(data, status){
       console.log("here")
-      //  term.echo("request send");
+      data_t = data.split(":");
+      list_t = data_t;
+      out = ""
+      for (var i = 0; i < data_t.length-1; i++) {
+        out += data_t[i] + "\n"
+      }
+      out +=  data_t[data_t.length-1];
+      term.echo(out);
     }
   });
 }

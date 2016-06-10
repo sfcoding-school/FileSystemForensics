@@ -18,6 +18,7 @@
       <script type='text/javascript' >
         var currentFolder = "~";
         var global_json;
+        var list_t;
       </script>
 
   </head>
@@ -58,6 +59,10 @@ jQuery(function($, undefined) {
         completion: function(terminal, command, callback) {
             if (terminal.get_command().indexOf("cd") > -1) {
                 callback(findFolder());
+            }
+            if (terminal.get_command().indexOf("choose") > -1) {
+                console.log("sdf")
+                callback(list_t);
             }
           }
     });
