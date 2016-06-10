@@ -10,7 +10,7 @@
 
     <title>Filesystemforensics by ulisse91</title>
 
-    <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="javascripts/jquery-1.7.2.min.js"></script>
       <script src="javascripts/jquery.mousewheel-min.js"></script>
       <script src="javascripts/jquery.terminal.min.js"></script>
       <script src="javascripts/myTerminal.js"></script>
@@ -32,10 +32,25 @@
 </script>
 <script>
 
+function test1(name, password, callback)
+{
+    console.log("ok");
+
+    if(name == "admin" && password == "admin")
+    {
+        callback("some_token");
+    }
+    else
+    {
+        callback(false);
+    }
+}
+
 jQuery(function($, undefined) {
     $('#term_demo').terminal(what_to_do, {
         greetings: 'Filesystemforensics Bash',
         name: 'js_demo',
+        login: test1,
         height: 600,
         prompt: '[[b;#5fff00;#000]user]:[[b;#af00ff;#000]~]$ ',
         exit: false,

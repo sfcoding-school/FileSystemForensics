@@ -76,6 +76,18 @@ function findFolder(){
 ///////////////////////////// COMMANDS /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+function takeAll(term){
+  $.ajax({
+       async: false,
+       type: 'GET',
+       url: "http://127.0.0.1:8000/terminal?id=x&cmd=takeAll",
+       success: function(data, status){
+               console.log("here")
+              //  term.echo("request send");
+       }
+  });
+}
+
 function ls(commands, term){
   console.log(commands.length);
   if (commands.length > 2){
@@ -130,6 +142,7 @@ function ls(commands, term){
   } else {
     term.echo("hai scritto ls per path: " + commands[0]);
   }
+
 }
 
 function cd(commands, term){
@@ -236,5 +249,6 @@ function manager(command, term){
   else if (commands[0] == "pwd") term.echo(currentFolder);
   else if (commands[0] == "hash") term.echo("The current FileSystem has hash: " + global_json["sha1"]);
   else if (commands[0] == "info") info(term);
+  else if (commands[0] == "takeAll") takeAll();
   else term.echo("Your command doesn't exists. Try to type: help");
 }
