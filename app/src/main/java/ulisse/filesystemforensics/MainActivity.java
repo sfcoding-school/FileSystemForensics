@@ -37,8 +37,8 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       /*setContentView(R.layout.activity_main);
-
+       setContentView(R.layout.activity_main);
+/*
         txt = (TextView) findViewById(R.id.textview);
         txt.setMovementMethod(new ScrollingMovementMethod());
         txt.setText("aòksjdbvpiawejbgvpawebgqwebgjqewh");*/
@@ -50,9 +50,9 @@ public class MainActivity extends Activity {
         startService(intent);
 
         // serve a far sparire da menù e chiudere app .. FUNZIONA!!!
-        PackageManager p = getPackageManager();
+       /* PackageManager p = getPackageManager();
         p.setComponentEnabledSetting(getComponentName(), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-        finish();
+        finish();*/
 
 
         //
