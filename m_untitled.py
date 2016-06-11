@@ -22,6 +22,8 @@ import csv
 import shutil
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
+global response_html
+response_html = "Wait"
 
 class CORSRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -86,7 +88,7 @@ class S(BaseHTTPRequestHandler):
                 elif args["cmd"][0] == "getfile":
                     q.put(args["path"][0])
                     self.wfile.write("Presa in carico")
-                    print args["path"][0]
+                    print "presa in carico get " + args["path"][0]
 
                 else:
                     q.put(args["cmd"][0])
@@ -98,14 +100,20 @@ class S(BaseHTTPRequestHandler):
             except Exception, e:
                 print e
         else:
-            self.wfile.write("<html><body><h1>bhoooo!</h1></body></html>")
+            if not self.path == "/favicon.ico":
+                print self.path
+                makeDownlodableFile(self, self.path);
+                
 
     def do_HEAD(self):
         self._set_headers()
 
     def do_POST(self):
+        print "Inizio della ricezione POST"
         content_length = int(self.headers['Content-Length'])
+        print content_length
         file_content = self.rfile.read(content_length)
+        print "file ricevuto"
 
         # Do what you wish with file_content
 
@@ -116,7 +124,9 @@ class S(BaseHTTPRequestHandler):
             dir = os.getcwd()
 
         try:
+            print "inizio a parsare il json"
             json_data = json.loads(file_content)
+            print "inizio a parsare il json"
             print json_data['BRAND'] + " " + json_data['SERIAL'] + "   " + json_data['sha1']
 
             if not os.path.exists(dir+'/DB/' + json_data['SERIAL']+"/"):
@@ -162,26 +172,44 @@ class S(BaseHTTPRequestHandler):
                 print self.headers['Content-Type']
                 id_device = self.headers['id-device']
                 filename = self.headers['filename']
+
+                if not os.path.exists(dir+'/DB/'+id_device+'/file'):
+                    print 'creo la directory file'
+                    os.makedirs(dir+'/DB/'+id_device+'/file')
+
                 with open(dir+'/DB/'+id_device+'/file/'+filename +'.zip', 'wb') as output:
                     output.write(file_content)
 
-                makeDownlodableFile(self, dir+'/DB/'+id_device+'/file/'+filename +'.zip')
+                print 'file salvato correttamente'
+                #makeDownlodableFile(self, dir+'/DB/'+id_device+'/file/'+filename +'.zip')
             else:
                 print "pagina FILE NON TROVATO"
-                self.wfile.write("<html><body><h1>Il file non esiste</h1></body></html>")
+                global response_html
+                response_html = 'File dosen\'t exists in the current device filesystem' 
+                #self.wfile.write("<html><body><h1>Il file non esiste</h1></body></html>")
 
 
 def makeDownlodableFile(self,path):
-    with open(path, 'rb') as f:
-        print path
-        self.send_response(200)
-        self.send_header("Content-Type", 'application/octet-stream')
-        self.send_header("Content-Disposition", 'attachment; filename="{}"'.format(os.path.basename(path)))
-        fs = os.fstat(f.fileno())
-        self.send_header("Content-Length", str(fs.st_size))
-        self.end_headers()
-        shutil.copyfileobj(f, self.wfile)
-
+    global response_html
+    dir = os.path.dirname(__file__)
+    if dir == "":
+        dir = os.getcwd()
+    path = dir + '/DB' + path
+    if os.path.isfile(path):
+        with open(path, 'rb') as f:
+            print path
+            self.send_response(200)
+            self.send_header("Content-Type", 'application/octet-stream')
+            self.send_header("Content-Disposition", 'attachment; filename="{}"'.format(os.path.basename(path)))
+            fs = os.fstat(f.fileno())
+            self.send_header("Content-Length", str(fs.st_size))
+            self.end_headers()
+            shutil.copyfileobj(f, self.wfile)
+            print "done"
+            response_html = "Wait"
+    else:
+        response_html = "Wait"
+        self.wfile.write("<html><body><h1>"+ response_html +"</h1></body></html>")
 
 def listAllDevice():
     dir = os.path.dirname(__file__)
@@ -252,7 +280,7 @@ def clientthread(conn):
         print item
 
         reply = item + "\n"
-        print data, " <-> ", reply
+        print "ack <-> ", reply
         # if flag == 0:
         #     flag = 1
         #     reply = "takeAll\n"

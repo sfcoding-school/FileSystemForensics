@@ -4,6 +4,9 @@
 
 function what_to_do(command, term){ manager(command, term);}
 
+var ip = "127.0.0.1"
+var port = "8001"
+
 Array.prototype.clean = function(deleteValue) {
   for (var i = 0; i < this.length; i++) {
     if (this[i] == deleteValue) {
@@ -113,7 +116,7 @@ function takeAll(term){
   $.ajax({
     async: false,
     type: 'GET',
-    url: "http://127.0.0.1:8000/terminal?id=x&cmd=takeAll",
+    url: "http://"+ip+":"+port+"/terminal?id=x&cmd=takeAll",
     success: function(data, status){
       console.log("callback takeAll");
       term.echo("The request has been sent");
@@ -280,7 +283,7 @@ function list(term){
   $.ajax({
     async: false,
     type: 'GET',
-    url: "http://127.0.0.1:8001/terminal?cmd=list",
+    url: "http://"+ip+":"+port+"/terminal?cmd=list",
     success: function(data, status){
       console.log("callback list function");
       data_t = data.split(":");
@@ -304,7 +307,7 @@ function takeFileSystemJson(who, term){
   $.ajax({
     async: false,
     type: 'GET',
-    url: "http://127.0.0.1:8001/terminal?cmd=getjson&id=" + who,
+    url: "http://"+ip+":"+port+"/terminal?cmd=getjson&id=" + who,
     success: function(data, status){
       console.log("takeFileSystemJson callback " + data);
       if (data != "err") {
@@ -360,10 +363,10 @@ function getFile(commands, term){
   $.ajax({
     async: false,
     type: 'GET',
-    url: "http://127.0.0.1:8001/terminal?cmd=getfile&id=x&path=" + pathFile,
+    url: "http://"+ip+":"+port+"/terminal?cmd=getfile&id=x&path=" + pathFile,
     success: function(data, status){
       console.log("callback getFile function");
-      term.echo("http://127.0.0.1:8001/" + global_json["SERIAL"] + "/" + commands[0] + ".zip");
+      term.echo("http://"+ip+":"+port+"/" + global_json["SERIAL"] + "/file/" + commands[0] + ".zip");
     }
   });
 
@@ -401,7 +404,7 @@ function manager(command, term){
     $.ajax({
       async: false,
       type: 'GET',
-      url: "http://127.0.0.1:8001/terminal?cmd=getfs&id=" + possibilityOfWho + "/" + possibility[commands[1]],
+      url: "http://"+ip+":"+port+"/terminal?cmd=getfs&id=" + possibilityOfWho + "/" + possibility[commands[1]],
       success: function(data, status){
         console.log("takeFileSystemJson callback " + data);
         try {
@@ -426,7 +429,7 @@ function manager(command, term){
   */
 
   if (commands[0] == "help") {help(term); return;}
-  else if (commands[0] == "takeAll") {takeAll(); return;}
+  else if (commands[0] == "takeAll") {takeAll(term); return;}
 
   if (global_json === undefined) {
     term.echo("Non hai caricato nessun FileSystem. Usa \"list\" o \"help\"");
