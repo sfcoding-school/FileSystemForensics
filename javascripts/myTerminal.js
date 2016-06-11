@@ -4,8 +4,8 @@
 
 function what_to_do(command, term){ manager(command, term);}
 
-var ip = "127.0.0.1"
-var port = "8001"
+var ip = "127.0.0.1";
+var port = "8001";
 
 Array.prototype.clean = function(deleteValue) {
   for (var i = 0; i < this.length; i++) {
@@ -264,6 +264,7 @@ function help(term){
   output += "info".padding(5) + "\tShow Information about the current Phone\n";
   output += "list".padding(5) + "\tShow the list of Devices\n";
   output += "get".padding(5) + "\tget will simply download the File specified on the command line\n";
+  output += "takeAll".padding(5) + "\tMap the current filesystem in the current device\n";
   term.echo(output);
 }
 
