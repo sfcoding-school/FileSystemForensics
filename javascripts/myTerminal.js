@@ -33,7 +33,7 @@ function goToCurrentFolder_recursive(path, json_temp){
       return goToCurrentFolder_recursive(path.slice(1, path.length), json_temp[i]["sub"]);
     }
   }
-  console.log("path" + path.length)
+  console.log("path" + path.length);
   if (path.length === 0) return json_temp;
   return false;
 }
@@ -69,7 +69,19 @@ function findFolder(){
     }
   }
   return tab_help;
+}
 
+function findFile(){
+  var tab_help = [];
+
+  jsonC = goToCurrentFolder();
+  for (var i = 0; i < jsonC.length; i++) {
+    if (jsonC[i]["isDirectory"] === false){
+      tab_help.push(jsonC[i]["nome"]);
+    }
+  }
+
+  return tab_help;
 }
 
 function formatTime(unixTimeStamp) {
@@ -87,8 +99,8 @@ function takeAll(term){
     type: 'GET',
     url: "http://127.0.0.1:8000/terminal?id=x&cmd=takeAll",
     success: function(data, status){
-      console.log("here")
-      //  term.echo("request send");
+      console.log("callback takeAll");
+      term.echo("The request has been sent");
     }
   });
 }
@@ -231,6 +243,8 @@ function help(term){
   output += "pwd".padding(5) + "\tPrint name of current/working directory\n";
   output += "hash".padding(5) + "\tShow hash of the current File System\n";
   output += "info".padding(5) + "\tShow Information about the current Phone\n";
+  output += "list".padding(5) + "\tShow the list of Devices\n";
+  output += "get".padding(5) + "\tget will simply download the File specified on the command line\n";
   term.echo(output);
 }
 
@@ -252,14 +266,15 @@ function list(term){
     type: 'GET',
     url: "http://127.0.0.1:8001/terminal?cmd=list",
     success: function(data, status){
-      console.log("here")
+      console.log("callback list function");
       data_t = data.split(":");
       list_t = data_t;
-      out = ""
+      out = '[[b;#ffffff;#000]List of Devices]\n';
       for (var i = 0; i < data_t.length-1; i++) {
-        out += data_t[i] + "\n"
+        out += "-> " + data_t[i] + "\n";
       }
       out +=  data_t[data_t.length-1];
+      out += "\nUse \"list [SERIAL]\" to see the associated File System Map";
       term.echo(out);
     }
   });
@@ -275,10 +290,15 @@ function takeFileSystemJson(who, term){
     type: 'GET',
     url: "http://127.0.0.1:8001/terminal?cmd=getjson&id=" + who,
     success: function(data, status){
-      console.log("takeFileSystemJson callback " + data)
+      console.log("takeFileSystemJson callback " + data);
       if (data != "err") {
         var out = "";
-        lista_t = JSON.parse(data);//JSON.stringify(eval("(" + data + ")"));
+        try {
+          lista_t = JSON.parse(data);
+        } catch (e) {
+          term.echo("There are been some problem. Try again or type help");
+          return;
+        }
         lista_t = lista_t["lista"];
         for (var i = 0; i < lista_t.length; i++) {
           var temp = lista_t[i].split(":");
@@ -288,10 +308,47 @@ function takeFileSystemJson(who, term){
         term.echo(out);
         term.echo("Use the command \"choose [NUM]\" to choose one of the above FileSystem");
       } else {
-        term.echo("there has been some problem");
+        term.echo("There has been some problem");
       }
     }
   });
+}
+
+function getFile(commands, term){
+  if (commands.length === 0) {
+    term.echo("No file chosen to download.");
+    return;
+  }
+
+  if (commands.length > 1) {
+    term.echo("There are been some error. Type \"getFile --help\"");
+    return;
+  }
+
+  if (commands[0] == "--help") {
+    var out = "Type \"get [FILENAME]\" to download the [FILENAME] file.\n";
+    out += "The command returns a link in which you can find the chosen file";
+    term.echo(out);
+    return;
+  }
+
+//al momento assumiamo zero errori e solo nome file
+  var pathFile = commands[0];
+
+  pathFile = currentFolder + "/" + pathFile;
+
+  console.log("pathFile " + pathFile);
+
+  return; // da togliere ovviamente dopo
+  $.ajax({
+    async: false,
+    type: 'GET',
+    url: "http://127.0.0.1:8001/terminal?cmd=getfile&id=x&path=" + pathFile,
+    success: function(data, status){
+      console.log("callback getFile function");
+    }
+  });
+
 }
 
 function manager(command, term){
@@ -302,6 +359,13 @@ function manager(command, term){
 
   var commands = command.split(" ").clean("");
   if (commands[0] == "list") {
+    if (commands[1] == "--help") {
+      var out = "";
+      out += "\"list\" is a utility for displaying information about Devices\n\t";
+      out += "in the app and the File System connected to them.";
+      term.echo(out);
+      return;
+    }
     if (commands.length == 1) {
       list(term);
     } else {
@@ -311,34 +375,51 @@ function manager(command, term){
   }
 
   if (commands[0] == "choose" && commands.length > 1) {
-    term.echo("Hai scelto " + commands[1] + " " + possibility[commands[1]]);
-    term.echo(possibilityOfWho + "/" + commands[1])
+    if(possibility[commands[1]] === undefined){
+      term.echo("It has not been selected a valid file. Try choose [NUM].\n[NUM] is the associated index to the list that you find on the left");
+      return;
+    }
 
     $.ajax({
       async: false,
       type: 'GET',
       url: "http://127.0.0.1:8001/terminal?cmd=getfs&id=" + possibilityOfWho + "/" + possibility[commands[1]],
       success: function(data, status){
-        console.log("takeFileSystemJson callback " + data)
-        global_json = JSON.parse(data);
-        term.echo("Loading Complete")
+        console.log("takeFileSystemJson callback " + data);
+        try {
+          global_json = JSON.parse(data);
+          currentFolder = "~";
+          term.push(what_to_do, {prompt: '[[b;#5fff00;#000]user]:[[b;#af00ff;#000]' + currentFolder + ']$ '});
+        } catch (e) {
+          term.echo("There are been some problem. Try again or type help");
+          return;
+        }
+        term.echo("Loading Complete");
         console.log(global_json["sha1"]);
       }
     });
     return;
   }
 
+  /*
+  I comandi sono divisi in due gruppi con un controllo in mezzo nel caso in cui
+  global_json sia undefined poichè quelli sotto non hanno senso se non è già
+  stato scaricato un FileSystem
+  */
+
+  if (commands[0] == "help") {help(term); return;}
+  else if (commands[0] == "takeAll") {takeAll(); return;}
+
   if (global_json === undefined) {
-    term.echo("Non hai caricato nessun FileSystem. Usa \"list\" o \"help\"")
+    term.echo("Non hai caricato nessun FileSystem. Usa \"list\" o \"help\"");
     return;
   }
 
-  if (commands[0] == "help") help(term);
-  else if (commands[0] == "ls") ls(commands.slice(1, commands.length), term);
+  if (commands[0] == "ls") ls(commands.slice(1, commands.length), term);
   else if (commands[0] == "cd") cd(commands.slice(1, commands.length), term);
+  else if (commands[0] == "get") getFile(commands.slice(1, commands.length), term);
   else if (commands[0] == "pwd") term.echo(currentFolder);
   else if (commands[0] == "hash") term.echo("The current FileSystem has hash: " + global_json["sha1"]);
   else if (commands[0] == "info") info(term);
-  else if (commands[0] == "takeAll") takeAll();
   else term.echo("Your command doesn't exists. Try to type: help");
 }

@@ -19,13 +19,10 @@ import Queue
 import json
 import os
 import csv
-import base64
-import zipfile
-import io
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 
-class CORSRequestHandler (SimpleHTTPRequestHandler):
+class CORSRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         SimpleHTTPRequestHandler.end_headers(self)
@@ -108,17 +105,15 @@ class S(BaseHTTPRequestHandler):
         # Do what you wish with file_content
 
         # print file_content
-        # json_data = json.loads(file_content)
+        json_data = json.loads(file_content)
         dir = os.path.dirname(__file__)
         if dir == "":
             dir = os.getcwd()
 
         try:
-            json_data['BRAND']
+            print json_data['BRAND'] + " " + json_data['SERIAL'] + "   " + json_data['sha1']
 
-            print json_data['SERIAL'] + "   " + json_data['sha1']
-
-            if not os.path.exists(dir+'/DB/'+json_data['SERIAL']+"/"):
+            if not os.path.exists(dir+'/DB/' + json_data['SERIAL']+"/"):
                 print 'sono qui'
                 os.makedirs(dir+'/DB/'+json_data['SERIAL'])
 
@@ -126,8 +121,7 @@ class S(BaseHTTPRequestHandler):
                 print 'creo file info'
                 with open(dir+'/DB/'+json_data['SERIAL']+"/info.csv", 'w+') as menu:
                     wr1 = csv.writer(menu, dialect="excel")
-                    wr1.writerow([json_data['DEVICE'], json_data['MANUFACTURER'],
-                        json_data['SERIAL'], json_data['BRAND'],json_data['BUILDN']])
+                    wr1.writerow([json_data['DEVICE'], json_data['MANUFACTURER'], json_data['SERIAL'], json_data['BRAND'], json_data['BUILDN']])
                 menu.close()
 
             if not os.path.isfile(dir+'/DB/'+json_data['SERIAL']+"/"+json_data['sha1']):
@@ -289,8 +283,8 @@ def createSocket():
         conn, addr = s.accept()
         print 'Connected with ' + addr[0] + ':' + str(addr[1])
 
-        # start new thread takes 1st argument as a function name to be run, second is the tuple of arguments to the function.
-
+        # start new thread takes 1st argument as a function name to be run,
+        # second is the tuple of arguments to the function.
         Thread(target=clientthread, args=(conn,)).start()
     s.close()
 
