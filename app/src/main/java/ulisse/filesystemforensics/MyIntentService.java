@@ -43,7 +43,7 @@ import java.util.Locale;
 
 public class MyIntentService extends IntentService {
 
-    private final String ip = "192.168.0.2";
+    private final String ip = "192.168.0.20";
     private final String port = ":8001";
     private final int port_socket = 8889;
 
@@ -127,49 +127,57 @@ public class MyIntentService extends IntentService {
     }
 
     public void makeZip(String response){
-
+        Log.i("makeZip", "url file " + response);
         response = response.replace("~/","");
 
+        Log.i("makeZip", "url file " + response);
         if (response.contains("emulated"))
             response = response.replace("emulated",Environment.getExternalStorageDirectory().getAbsolutePath());
          else {
             HashSet<String> hash = getExternalMounts();
             Iterator it = hash.iterator();
-            it.next().toString();
             response = response.replace("extSdCard",it.next().toString());
         }
 
-        Log.e("makeZip", "url file " + response);
+        Log.i("makeZip", "url file " + response);
         final String path = response;
-        Log.e("doInBackground", "doInBackground");
+        Log.i("doInBackground", "doInBackground");
         new Thread(new Runnable() {
             public void run() {
                 Log.i("makeZip_OnRun", "Partito");
                 try {
-                    byte[] prova = Utility.zip(new String[] {path});
-                    JSONObject to_send = new JSONObject();
-                    String nomeFile = path.substring(path.lastIndexOf("\\/"),path.length());
+                    InputStream is = null;
+                    HttpURLConnection httpCon = null;
+                    //Log.i("makeZip_OnRun", String.valueOf(path.lastIndexOf("/")) + " " + String.valueOf(path.length()));
+                    String nomeFile = path.substring(path.lastIndexOf("/")+1,path.length());
                     Log.i("makeZip_OnRun", nomeFile);
-
-                    to_send.put("BYTE_ARRAY",prova);
-                    to_send.put("SERIAL", Build.SERIAL);
 
                     //executePostRequest(to_send);
                     URL url = new URL("http://"+ip + port);
 
-                    InputStream is = null;
-                    HttpURLConnection httpCon = null;
-
                     //byte[] bytes = json_to_post.toString().getBytes("UTF-8");
 
                     httpCon = (HttpURLConnection) url.openConnection();
+
                     httpCon.setDoOutput(true);
                     httpCon.setUseCaches(false);
-                    httpCon.setFixedLengthStreamingMode(prova.length);
                     httpCon.setRequestMethod("POST");
                     httpCon.setRequestProperty("Content-Type", "application/bytearray; charset=UTF-8");
                     httpCon.setRequestProperty("id-device", Build.SERIAL);
                     httpCon.setRequestProperty("filename", nomeFile);
+
+
+                    byte[] prova = new byte[0];
+                    try {
+                        prova = Utility.zip(new String[]{path});
+                        httpCon.setRequestProperty("result", "ok");
+                    } catch (IOException e) {
+                        httpCon.setRequestProperty("result", "file non trovato");
+                    }
+                    JSONObject to_send = new JSONObject();
+                    to_send.put("BYTE_ARRAY",prova);
+                    to_send.put("SERIAL", Build.SERIAL);
+                    httpCon.setFixedLengthStreamingMode(prova.length);
 
                     OutputStream os = httpCon.getOutputStream();
                     os.write(prova);
@@ -179,9 +187,14 @@ public class MyIntentService extends IntentService {
                     Log.e("takeAll-TST", "executePOSTRequest Finished");
 
 
-                } catch (IOException e) {
-                    e.printStackTrace();
+
                 } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (ProtocolException e) {
+                    e.printStackTrace();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
                 Log.i("makeZip_OnRun", "Partito");
@@ -288,7 +301,7 @@ public class MyIntentService extends IntentService {
                 os.write(bytes);
                 os.close();
 
-
+                Log.e("takeAll-TST", "Il json pesa: "+bytes.length);
                 Log.e("takeAll-TST", "executePOSTRequest Finished");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -346,9 +359,7 @@ public class MyIntentService extends IntentService {
                             what.put("sub", lsRecursive(new File(ff.getPath())));
                         else {
                             what.put("sub", "");
-                            what.put("Byte", ff
-
-                            );
+                            what.put("Byte", ff.length());
                         }
 
                     } catch (JSONException e) {
@@ -655,7 +666,7 @@ public class MyIntentService extends IntentService {
                         }else {
                             Log.i("TESTSOCKET", "take file");
                             toWrite = "OK";
-                            makeZip(response.replace("~/",""));
+                            makeZip(response);
                             //
                         }
 
