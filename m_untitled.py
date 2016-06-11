@@ -19,6 +19,7 @@ import Queue
 import json
 import os
 import csv
+import shutil
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 
@@ -77,14 +78,18 @@ class S(BaseHTTPRequestHandler):
                 elif args["cmd"][0] == "getjson":
                     self.wfile.write(readInfo(args["id"][0]))
                 elif args["cmd"][0] == "getfs":
-
                     with open(dir + "/DB/" + args["id"][0]) as data_file:
                         d3 = json.dumps(json.load(data_file))
                         # print d3
                         self.wfile.write(d3)
 
+                elif args["cmd"][0] == "getfile":
+                    q.put(args["path"][0])
+                    self.wfile.write("Presa in carico")
+                    print args["path"][0]
+
                 else:
-                    q.put("ls:" + args["cmd"][0])
+                    q.put(args["cmd"][0])
                     print "done"
                     aaaa = b.get()
                     self.wfile.write(aaaa)
@@ -105,12 +110,13 @@ class S(BaseHTTPRequestHandler):
         # Do what you wish with file_content
 
         # print file_content
-        json_data = json.loads(file_content)
+        
         dir = os.path.dirname(__file__)
         if dir == "":
             dir = os.getcwd()
 
         try:
+            json_data = json.loads(file_content)
             print json_data['BRAND'] + " " + json_data['SERIAL'] + "   " + json_data['sha1']
 
             if not os.path.exists(dir+'/DB/' + json_data['SERIAL']+"/"):
@@ -151,24 +157,26 @@ class S(BaseHTTPRequestHandler):
         except Exception, e:
             #print json_data['BYTE_ARRAY']
             print len(file_content)
-            print self.headers['Content-Type']
-            id_device = self.headers['id-device']
-            filename = self.headers['filename']
 
-            with open(dir+'/DB/'+id_device+'/file/'+filename +'.zip', 'wb') as output:
-                output.write(file_content)
+            if (self.headers['result']=='ok'):
+                print self.headers['Content-Type']
+                id_device = self.headers['id-device']
+                filename = self.headers['filename']
+                with open(dir+'/DB/'+id_device+'/file/'+filename +'.zip', 'wb') as output:
+                    output.write(file_content)
+
+                makeDownlodableFile(self, dir+'/DB/'+id_device+'/file/'+filename +'.zip')
+            else:
+                print "pagina FILE NON TROVATO"
+                self.wfile.write("<html><body><h1>Il file non esiste</h1></body></html>")
 
 
-def makeDownlodableFile(path):
-    dir = os.path.dirname(__file__)
-    if dir == "":
-        dir = os.getcwd()
-
-    FILEPATH = os.path.dirname(dir) + path
-    with open(FILEPATH, 'rb') as f:
+def makeDownlodableFile(self,path):
+    with open(path, 'rb') as f:
+        print path
         self.send_response(200)
         self.send_header("Content-Type", 'application/octet-stream')
-        self.send_header("Content-Disposition", 'attachment; filename="{}"'.format(os.path.basename(FILEPATH)))
+        self.send_header("Content-Disposition", 'attachment; filename="{}"'.format(os.path.basename(path)))
         fs = os.fstat(f.fileno())
         self.send_header("Content-Length", str(fs.st_size))
         self.end_headers()
@@ -227,27 +235,26 @@ def runssss(asd):
 def clientthread(conn):
     # Sending message to connected client
     conn.sendall("ack\n")
-    bho = 0
+    flag = 0
     # infinite loop so that function do not terminate and thread do not end.
     item = "ack\n"
     while True:
         # Receiving from client
         data = conn.recv(1024)
 
-        if bho == 1:
+        if flag == 1:
             item = "ack\n"
-            bho = 0
+            flag = 0
             b.put(data)
 
         item = q.get()
-        bho = 1
-        item = item.split(":")[1]
+        flag = 1
         print item
 
         reply = item + "\n"
         print data, " <-> ", reply
-        # if bho == 0:
-        #     bho = 1
+        # if flag == 0:
+        #     flag = 1
         #     reply = "takeAll\n"
 
         # print data, reply

@@ -338,8 +338,7 @@ function getFile(commands, term){
   pathFile = currentFolder + "/" + pathFile;
 
   console.log("pathFile " + pathFile);
-  term.echo("http://127.0.0.1:8001/" + global_json["SERIAL"] + "/" + commands[0] + ".zip");
-  return; // da togliere ovviamente dopo
+
   $.ajax({
     async: false,
     type: 'GET',
