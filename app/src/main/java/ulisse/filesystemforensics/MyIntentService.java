@@ -43,7 +43,9 @@ import java.util.Locale;
 
 public class MyIntentService extends IntentService {
 
-    private final String ip = "192.168.43.194";
+    private final String ip = "192.168.0.2";
+    private final String port = ":8001";
+    private final int port_socket = 8889;
 
     public MyIntentService() {
         super("MyIntentService");
@@ -126,6 +128,7 @@ public class MyIntentService extends IntentService {
 
     public void makeZip(String response){
 
+        response = response.replace("~/","");
 
         if (response.contains("emulated"))
             response = response.replace("emulated",Environment.getExternalStorageDirectory().getAbsolutePath());
@@ -136,6 +139,7 @@ public class MyIntentService extends IntentService {
             response = response.replace("extSdCard",it.next().toString());
         }
 
+        Log.e("makeZip", "url file " + response);
         final String path = response;
         Log.e("doInBackground", "doInBackground");
         new Thread(new Runnable() {
@@ -151,7 +155,7 @@ public class MyIntentService extends IntentService {
                     to_send.put("SERIAL", Build.SERIAL);
 
                     //executePostRequest(to_send);
-                    URL url = new URL("http://"+ip + ":8000");
+                    URL url = new URL("http://"+ip + port);
 
                     InputStream is = null;
                     HttpURLConnection httpCon = null;
@@ -269,7 +273,7 @@ public class MyIntentService extends IntentService {
             HttpURLConnection httpCon = null;
             try {
                 //constants
-                URL url = new URL("http://"+ip + ":8000");
+                URL url = new URL("http://"+ip + port);
 
                 byte[] bytes = json_to_post.toString().getBytes("UTF-8");
 
@@ -611,7 +615,7 @@ public class MyIntentService extends IntentService {
             BufferedReader br = null;
             while (true){
                 try {
-                    s = new Socket(ip, 8889);
+                    s = new Socket(ip, port_socket);
 
                     DataOutputStream dos = null;
 
@@ -651,7 +655,7 @@ public class MyIntentService extends IntentService {
                         }else {
                             Log.i("TESTSOCKET", "take file");
                             toWrite = "OK";
-                            makeZip(response);
+                            makeZip(response.replace("~/",""));
                             //
                         }
 
