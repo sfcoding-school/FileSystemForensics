@@ -339,7 +339,6 @@ function getFile(commands, term){
 
   console.log("pathFile " + pathFile);
 
-  return; // da togliere ovviamente dopo
   $.ajax({
     async: false,
     type: 'GET',
