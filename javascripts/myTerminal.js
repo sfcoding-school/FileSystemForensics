@@ -39,7 +39,7 @@ function goToCurrentFolder_recursive(path, json_temp){
 }
 
 function goToCurrentFolder(){
-  console.log(currentFolder);
+  console.log("goToCurrentFolder: " + currentFolder);
   if (currentFolder == "/" || currentFolder == "~") {
     return global_json["FileSystem"];
   } else {
@@ -59,15 +59,31 @@ function checkExistingPath(path){
   return true;
 }
 
-function findFolder(){
+function findFolder(currentChoice){
+  console.log("findFolder: " + currentChoice);
+  currentChoice = currentChoice.split("/")
+  currentChoice.splice(-1,1);
+  currentChoice = currentChoice.join("/")
+  console.log("findFolder2: " + currentChoice);
+  string_toAdd = ""
+  if (checkExistingPath(currentChoice)) {
+    temp = currentFolder;
+    string_toAdd = currentChoice + "/";
+    console.log(string_toAdd)
+    currentFolder = currentFolder + "/" + currentChoice;
+    jsonC = goToCurrentFolder();
+    currentFolder = temp;
+  } else {
+    jsonC = goToCurrentFolder();
+  }
   var tab_help = [];
-
-  jsonC = goToCurrentFolder();
   for (var i = 0; i < jsonC.length; i++) {
     if (jsonC[i]["isDirectory"] === true){
-      tab_help.push(jsonC[i]["nome"]);
+      tab_help.push(string_toAdd + jsonC[i]["nome"].replace(/\s/g, "\\ "));
     }
   }
+  console.log(tab_help.length)
+  console.log(tab_help)
   return tab_help;
 }
 
@@ -77,7 +93,7 @@ function findFile(){
   jsonC = goToCurrentFolder();
   for (var i = 0; i < jsonC.length; i++) {
     if (jsonC[i]["isDirectory"] === false){
-      tab_help.push(jsonC[i]["nome"]);
+      tab_help.push(jsonC[i]["nome"].replace(/\s/g, "\\ "));
     }
   }
 
@@ -315,6 +331,8 @@ function takeFileSystemJson(who, term){
 }
 
 function getFile(commands, term){
+  commands = commands.join(" ").replace(/\\ /g, '#');
+  commands = commands.split(" ");
   if (commands.length === 0) {
     term.echo("No file chosen to download.");
     return;
@@ -332,10 +350,10 @@ function getFile(commands, term){
     return;
   }
 
-//al momento assumiamo zero errori e solo nome file
+  //al momento assumiamo zero errori e solo nome file
   var pathFile = commands[0];
 
-  pathFile = currentFolder + "/" + pathFile;
+  pathFile = currentFolder.replace(/\\ /g, '+') + "/" + pathFile.replace(/\\ /g, '+').replace(/#/g, '+');
 
   console.log("pathFile " + pathFile);
 

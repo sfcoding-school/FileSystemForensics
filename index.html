@@ -24,12 +24,12 @@
 
 <body>
 
-  <!-- <script type="text/javascript">
+  <script type="text/javascript">
 
   $.getJSON("test.json", function(_json) {
   global_json = _json;
 });
-</script> -->
+</script>
 <script>
 
 function test1(name, password, callback)
@@ -57,7 +57,11 @@ jQuery(function($, undefined) {
     tabcompletion: true,
     completion: function(terminal, command, callback) {
       if (terminal.get_command().indexOf("cd") > -1) {
-        callback(findFolder());
+
+        currentChoice = terminal.get_command().split(" ");
+        currentChoice = currentChoice.slice(1, currentChoice.length);
+        console.log("before: " + currentChoice)
+        callback(findFolder(currentChoice[0]));
       }
       if (terminal.get_command().indexOf("list") > -1) {
         callback(list_t);
