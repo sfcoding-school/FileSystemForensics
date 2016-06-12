@@ -2,6 +2,13 @@
 ///////////////////////////// UTILITY /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
+Funzione standard di gestione del terminale, essa viene inserita ogni qual volta
+che si "aggancia" il div del terminale a jquery
+Al suo interno ha l'unico scopo di chiamare la funzione manager che sarà
+quella che gestisce la lettura del comando scritto e l'eventuale funzione
+da richiamare
+*/
 function what_to_do(command, term){ manager(command, term);}
 
 var ip = "127.0.0.1";
@@ -30,30 +37,39 @@ String.prototype.padding = function(n, c)
   //      return (n < 0) ? val + pad : pad + val;
 };
 
+/*
+Come da nome scorrendo il path datogli per parametro in maniera ricorsiva
+arriverà a quel ramo del FileSystem
+Ogni volta che viene richiamata si toglie la testa del path
+*/
 function goToCurrentFolder_recursive(path, json_temp){
   for (var i = 0; i < json_temp.length; i++) {
     if (json_temp[i]["nome"].replace(/\s/g, '#') == path[0]) {
       return goToCurrentFolder_recursive(path.slice(1, path.length), json_temp[i]["sub"]);
     }
   }
-  console.log("path" + path.length);
   if (path.length === 0) return json_temp;
   return false;
 }
 
+/*
+Serve a ritornare effettivamente la parte dell'albero del FileSystem
+su cui si trova l'utente da terminale
+Il punto è sempre la variabile globale currentFolder
+*/
 function goToCurrentFolder(){
   console.log("goToCurrentFolder: " + currentFolder);
   if (currentFolder == "/" || currentFolder == "~") {
     return global_json["FileSystem"];
   } else {
     var temp = currentFolder.replace(/\\ /g, '#').split("/");
-    console.log(temp);
-
     return goToCurrentFolder_recursive(temp.slice(1, temp.length), global_json["FileSystem"]);
-
   }
 }
 
+/*
+Come da nome controlla se un path effettivamente esiste
+*/
 function checkExistingPath(path){
   c_t = currentFolder + "/" + path;
   if(goToCurrentFolder_recursive(c_t.split("/").slice(1, c_t.length), global_json["FileSystem"]) === false)
@@ -62,17 +78,24 @@ function checkExistingPath(path){
   return true;
 }
 
+/*
+Serve a ritornare un array di possibili cartelle di scelta per il comando
+"cd", viene richiamata se nel terminale si sta usando "cd [TAB]"
+*/
 function findFolder(currentChoice){
   console.log("findFolder: " + currentChoice);
   currentChoice = currentChoice.split("/")
   currentChoice.splice(-1,1);
   currentChoice = currentChoice.join("/")
-  console.log("findFolder2: " + currentChoice);
   string_toAdd = ""
   if (checkExistingPath(currentChoice)) {
+    /*
+    Si utilizza una variabile temporanea per sostituire temporaneamente
+    la variabile currentFolder con la scelta attuale dell'utente
+    per andare a cercare le cartelle in quel ramo del FileSystem
+    */
     temp = currentFolder;
     string_toAdd = currentChoice + "/";
-    console.log(string_toAdd)
     currentFolder = currentFolder + "/" + currentChoice;
     jsonC = goToCurrentFolder();
     currentFolder = temp;
@@ -85,27 +108,27 @@ function findFolder(currentChoice){
       tab_help.push(string_toAdd + jsonC[i]["nome"].replace(/\s/g, "\\ "));
     }
   }
-  console.log(tab_help.length)
-  console.log(tab_help)
   return tab_help;
 }
 
+/*
+Serve a ritornare un array di possibili file di scelta per il comando
+"get", viene richiamata se nel terminale si sta usando "get [TAB]"
+*/
 function findFile(){
   var tab_help = [];
-
   jsonC = goToCurrentFolder();
   for (var i = 0; i < jsonC.length; i++) {
     if (jsonC[i]["isDirectory"] === false){
       tab_help.push(jsonC[i]["nome"].replace(/\s/g, "\\ "));
     }
   }
-
   return tab_help;
 }
 
 function formatTime(unixTimeStamp) {
   var dateTime = new Date(unixTimeStamp*1000);
-  return dateTime.toISOString().replace("T", " "); // Returns "2013-05-31T11:54:44.000Z";
+  return dateTime.toISOString().replace("T", " "); // Return del tipo: "2013-05-31T11:54:44.000Z";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +139,7 @@ function takeAll(term){
   $.ajax({
     async: false,
     type: 'GET',
-    url: "http://"+ip+":"+port+"/terminal?id=x&cmd=takeAll",
+    url: "http://"+ip+":"+port+"/terminal?id=" + possibilityOfWho + "&cmd=takeAll",
     success: function(data, status){
       console.log("callback takeAll");
       term.echo("The request has been sent");
@@ -141,8 +164,6 @@ function ls(commands, term){
     }
   }
 
-  console.log(commands[0] + " " + commands.length);
-
   if (commands[0] == "--help" ) {
     var output = "Use: ls [OPZIONE]... [FILE]...\n";
     output += "List information about the current directory\n";
@@ -150,16 +171,10 @@ function ls(commands, term){
     term.echo(output);
     return;
   } else if(commands.length === 0){
-    // term.echo("I'll do something in the current folder");
-
     if (global_json !== undefined) {
-      // console.log(global_json);
-      // term.echo("Sha: " + global_json["sha1"]);
       jsonC = goToCurrentFolder();
       var myOut = "";
-
       for (var i = 0; i < jsonC.length; i++) {
-
         if (jsonC[i]["isDirectory"] === true){
           myOut += '[[b;#0080FF;#000]' + jsonC[i]["nome"] + ']\n';
         } else {
@@ -169,17 +184,14 @@ function ls(commands, term){
           } else {
             myOut += "\r\n";
           }
-
         }
       }
       term.echo(myOut);
     }
-
     return;
   } else {
-    term.echo("hai scritto ls per path: " + commands[0]);
+    term.echo("The command ls for a path has not been handled");
   }
-
 }
 
 function cd(commands, term){
@@ -210,7 +222,6 @@ function cd(commands, term){
     if (commands[0].indexOf("..") > -1) {
       if (commands[0] == ".." || commands[0] == "../") {
         if (currentFolder != "/" || currentFolder != "~") {
-
           var temp = currentFolder.split("/");
           temp = temp.slice(0, temp.length-1);
           currentFolder = temp.join("/");
@@ -218,12 +229,10 @@ function cd(commands, term){
           term.push(what_to_do, {prompt: '[[b;#5fff00;#000]user]:[[b;#af00ff;#000]' + currentFolder + ']$ '});
         }
       } else {
-        term.error("volevo andare indietro di più di una cartella e magari anche entrare in un altra. DA GESTIRE");
+        term.error("The command cd for multiple previous directories has not been handled");
       }
-
       return;
     }
-
 
     // serve a rimuovere eventuale "/" in fondo
     if (commands[0][commands[0].length-1] == "/") {
@@ -305,6 +314,7 @@ var possibility = [];
 
 function takeFileSystemJson(who, term){
   possibilityOfWho = who;
+  possibility = []
   $.ajax({
     async: false,
     type: 'GET',
@@ -364,7 +374,7 @@ function getFile(commands, term){
   $.ajax({
     async: false,
     type: 'GET',
-    url: "http://"+ip+":"+port+"/terminal?cmd=getfile&id=x&path=" + pathFile,
+    url: "http://"+ip+":"+port+"/terminal?cmd=getfile&id=" + possibilityOfWho + "&path=" + pathFile,
     success: function(data, status){
       console.log("callback getFile function");
       term.echo("http://"+ip+":"+port+"/" + global_json["SERIAL"] + "/file/" + commands[0] + ".zip");

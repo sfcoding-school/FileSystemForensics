@@ -24,14 +24,14 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 global response_html
 response_html = "Wait"
+q = Queue.Queue()
+b = Queue.Queue()
+
 
 class CORSRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         SimpleHTTPRequestHandler.end_headers(self)
-
-q = Queue.Queue()
-b = Queue.Queue()
 
 
 class S(BaseHTTPRequestHandler):
@@ -102,8 +102,7 @@ class S(BaseHTTPRequestHandler):
         else:
             if not self.path == "/favicon.ico":
                 print self.path
-                makeDownlodableFile(self, self.path);
-                
+                makeDownlodableFile(self, self.path)
 
     def do_HEAD(self):
         self._set_headers()
@@ -115,10 +114,6 @@ class S(BaseHTTPRequestHandler):
         file_content = self.rfile.read(content_length)
         print "file ricevuto"
 
-        # Do what you wish with file_content
-
-        # print file_content
-        
         dir = os.path.dirname(__file__)
         if dir == "":
             dir = os.getcwd()
@@ -152,23 +147,16 @@ class S(BaseHTTPRequestHandler):
                     json.dump(json_data, outfile)
                 outfile.close()
 
-
             print readInfo(json_data['SERIAL'])
 
             # Respond with 200 OK
             self.send_response(200)
-            # # Doesn't do anything with posted data
-            # self._set_headers()
 
-            # ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
-            # print ctype, pdict
-            # self.wfile.write("OK")
-
-        except Exception, e:
-            #print json_data['BYTE_ARRAY']
+        except Exception:
+            # print json_data['BYTE_ARRAY']
             print len(file_content)
 
-            if (self.headers['result']=='ok'):
+            if (self.headers['result'] == 'ok'):
                 print self.headers['Content-Type']
                 id_device = self.headers['id-device']
                 filename = self.headers['filename']
@@ -177,19 +165,19 @@ class S(BaseHTTPRequestHandler):
                     print 'creo la directory file'
                     os.makedirs(dir+'/DB/'+id_device+'/file')
 
-                with open(dir+'/DB/'+id_device+'/file/'+filename +'.zip', 'wb') as output:
+                with open(dir+'/DB/'+id_device+'/file/'+filename + '.zip', 'wb') as output:
                     output.write(file_content)
 
                 print 'file salvato correttamente'
-                #makeDownlodableFile(self, dir+'/DB/'+id_device+'/file/'+filename +'.zip')
+
             else:
                 print "pagina FILE NON TROVATO"
                 global response_html
-                response_html = 'File dosen\'t exists in the current device filesystem' 
-                #self.wfile.write("<html><body><h1>Il file non esiste</h1></body></html>")
+                response_html = 'File dosen\'t exists in the current device filesystem'
+                # self.wfile.write("<html><body><h1>Il file non esiste</h1></body></html>")
 
 
-def makeDownlodableFile(self,path):
+def makeDownlodableFile(self, path):
     global response_html
     dir = os.path.dirname(__file__)
     if dir == "":
@@ -209,7 +197,8 @@ def makeDownlodableFile(self,path):
             response_html = "Wait"
     else:
         response_html = "Wait"
-        self.wfile.write("<html><body><h1>"+ response_html +"</h1></body></html>")
+        self.wfile.write("<html><body><h1>" + response_html + "</h1></body></html>")
+
 
 def listAllDevice():
     dir = os.path.dirname(__file__)
@@ -250,7 +239,7 @@ def readInfo(id_device):
         else:
             print "some error, the path doesnt exists"
     except Exception as e:
-        return "err"
+        return "err", e
 
 
 def runssss(asd):
@@ -281,13 +270,6 @@ def clientthread(conn):
 
         reply = item + "\n"
         print "ack <-> ", reply
-        # if flag == 0:
-        #     flag = 1
-        #     reply = "takeAll\n"
-
-        # print data, reply
-        # if not data:
-        #     break
 
         conn.sendall(reply)
         if not q.empty():
