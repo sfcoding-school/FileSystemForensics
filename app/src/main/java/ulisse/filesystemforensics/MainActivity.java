@@ -28,7 +28,7 @@ import java.sql.Date;
 import java.text.DateFormat;
 
 public class MainActivity extends Activity {
-    
+
     private static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 0;
 
     @Override
