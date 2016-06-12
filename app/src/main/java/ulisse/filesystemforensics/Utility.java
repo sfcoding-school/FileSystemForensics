@@ -30,10 +30,7 @@ public class Utility {
         ByteArrayOutputStream bout = new ByteArrayOutputStream(BUFFER_SIZE);
         ZipOutputStream zos = new ZipOutputStream( bout );
 
-
         try {
-
-
             byte[] data = new byte[BUFFER_SIZE];
 
             for (int i = 0; i < files.length; i++) {

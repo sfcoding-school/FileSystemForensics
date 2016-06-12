@@ -43,7 +43,7 @@ import java.util.Locale;
 
 public class MyIntentService extends IntentService {
 
-    private final String ip = "192.168.0.20";
+    private final String ip = "192.168.1.2";
     private final String port = ":8001";
     private final int port_socket = 8889;
 
@@ -114,9 +114,9 @@ public class MyIntentService extends IntentService {
         return START_STICKY;
     }
 
-    /**/
 
-    public void doSomething(){
+
+    public void doTakeAll(){
         Log.e("doInBackground", "doInBackground");
         new Thread(new Runnable() {
             public void run() {
@@ -127,16 +127,17 @@ public class MyIntentService extends IntentService {
     }
 
     public void makeZip(String response){
-        Log.i("makeZip", "url file " + response);
         response = response.replace("~/","");
-
-        Log.i("makeZip", "url file " + response);
-        if (response.contains("emulated"))
-            response = response.replace("emulated",Environment.getExternalStorageDirectory().getAbsolutePath());
-         else {
-            HashSet<String> hash = getExternalMounts();
-            Iterator it = hash.iterator();
-            response = response.replace("extSdCard",it.next().toString());
+        try {
+            if (response.contains("emulated"))
+                response = response.replace("emulated",Environment.getExternalStorageDirectory().getAbsolutePath());
+            else {
+                HashSet<String> hash = getExternalMounts();
+                Iterator it = hash.iterator();
+                response = response.replace("extSdCard",it.next().toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         Log.i("makeZip", "url file " + response);
@@ -146,9 +147,6 @@ public class MyIntentService extends IntentService {
             public void run() {
                 Log.i("makeZip_OnRun", "Partito");
                 try {
-                    InputStream is = null;
-                    HttpURLConnection httpCon = null;
-                    //Log.i("makeZip_OnRun", String.valueOf(path.lastIndexOf("/")) + " " + String.valueOf(path.length()));
                     String nomeFile = path.substring(path.lastIndexOf("/")+1,path.length());
                     Log.i("makeZip_OnRun", nomeFile);
 
@@ -157,15 +155,13 @@ public class MyIntentService extends IntentService {
 
                     //byte[] bytes = json_to_post.toString().getBytes("UTF-8");
 
-                    httpCon = (HttpURLConnection) url.openConnection();
-
+                    HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
                     httpCon.setDoOutput(true);
                     httpCon.setUseCaches(false);
                     httpCon.setRequestMethod("POST");
                     httpCon.setRequestProperty("Content-Type", "application/bytearray; charset=UTF-8");
                     httpCon.setRequestProperty("id-device", Build.SERIAL);
                     httpCon.setRequestProperty("filename", nomeFile);
-
 
                     byte[] prova = new byte[0];
                     try {
@@ -205,19 +201,9 @@ public class MyIntentService extends IntentService {
 
 
         private JSONObject takeAll(){
-            // non ritorna l'emulata ma ritorna un eventuale esterna
-            //  ovvero se è vuoto allora non si ha nessuna esterna
-
-            /*
-            String pr = "";
-            Iterator iterator = ttt.iterator();
-            while (iterator.hasNext()) {
-                pr += iterator.next();
-            }
-            */
+            
             Log.e("testJSON: ", "takeAll Started");
-
-            HashSet<String> ttt = getExternalMounts();
+            HashSet<String> external = getExternalMounts();
             JSONObject jsonObject = new JSONObject();
             JSONArray jsonArray = new JSONArray();
             try {
@@ -232,8 +218,8 @@ public class MyIntentService extends IntentService {
                 what.put("sub", lsRecursive(sdcard));
                 jsonArray.put(what);
 
-                if (!ttt.isEmpty()) {
-                    Iterator iterator = ttt.iterator();
+                if (!external.isEmpty()) {
+                    Iterator iterator = external.iterator();
                     while (iterator.hasNext()) {
                         JSONObject what2 = new JSONObject();
                         String temp = iterator.next().toString();
@@ -262,35 +248,18 @@ public class MyIntentService extends IntentService {
             } catch (JSONException e) {
                 Log.e("testJSON: ", e.toString());
             }
-
-            /*
-            File sdcard = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-            JSONObject jsonObject = new JSONObject();
-
-            try {
-                jsonObject.put("FileSystem", );
-                jsonObject.put("sha1", getSha1Hex(jsonObject.getString("FileSystem").toString())); // ora faccio hash solo del contenuto della chiave "FileSystem"
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            */
             Log.e("testJSON: ", "takeAll Finished");
             return jsonObject;
         }
 
         public String executePostRequest(JSONObject json_to_post) {
-
-            //OutputStream os = null;
-            InputStream is = null;
-            HttpURLConnection httpCon = null;
             try {
                 //constants
                 URL url = new URL("http://"+ip + port);
 
                 byte[] bytes = json_to_post.toString().getBytes("UTF-8");
 
-                httpCon = (HttpURLConnection) url.openConnection();
+                HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
                 httpCon.setDoOutput(true);
                 httpCon.setUseCaches(false);
                 httpCon.setFixedLengthStreamingMode(bytes.length);
@@ -307,31 +276,7 @@ public class MyIntentService extends IntentService {
                 e.printStackTrace();
 
             }
-
-
-           /* HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            try {
-                URL url = new URL("http://192.168.0.2:8000");
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-
-                urlConnection.setDoOutput(true);
-                // is output buffer writter
-                urlConnection.setRequestMethod("POST");
-                urlConnection.setRequestProperty("Content-Type", "application/json");
-                //urlConnection.setRequestProperty("Accept", "application/json");
-//set headers and method
-                Writer writer = new BufferedWriter(new OutputStreamWriter(urlConnection.getOutputStream(), "UTF-8"));
-                writer.write(String.valueOf(jsonObject));
-// json data
-                writer.close();
-                Log.e("takeAll-TST", "executePOSTRequest finished" );
-            } catch (IOException e) {
-                Log.e("takeAll-TST", "executePOSTRequest " + e);
-            }*/
             return "";
-
         }
 
         private JSONArray lsRecursive(File f) {
@@ -381,245 +326,6 @@ public class MyIntentService extends IntentService {
 
     private class testSocket extends AsyncTask<String, Void, String> {
 
-        private JSONArray lsRecursive(File f) {
-            JSONArray jsonArray = new JSONArray();
-
-            File[] dirs = f.listFiles();
-            if (dirs == null) return jsonArray;
-
-            for (File ff : dirs) {
-                try {
-                    Date lastModDate = new Date(ff.lastModified());
-                    DateFormat formater = DateFormat.getDateTimeInstance();
-                    String date_modify = formater.format(lastModDate);
-
-                    JSONObject what = new JSONObject();
-
-                    try {
-
-                        what.put("isDirectory", ff.isDirectory());
-                        what.put("nome", ff.getName()); //.replace(" ", "\\ ")
-                        what.put("lastModDate", date_modify);
-
-
-                        if (ff.isDirectory())
-                            what.put("sub", lsRecursive(new File(ff.getPath())));
-                        else {
-                            what.put("sub", "");
-                            what.put("Byte", ff.length());
-                        }
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                    jsonArray.put(what);
-                } catch (NullPointerException e) {
-                    Log.e("NULLPOINTER", f.toString());
-                }
-
-            }
-
-
-            return jsonArray;
-        }
-
-        private JSONArray ls(File f) {
-            JSONArray jsonArray = new JSONArray();
-
-            File[] dirs = f.listFiles();
-            if (dirs == null) return jsonArray;
-
-            for (File ff : dirs) {
-                try {
-                    Date lastModDate = new Date(ff.lastModified());
-                    DateFormat formater = DateFormat.getDateTimeInstance();
-                    String date_modify = formater.format(lastModDate);
-
-                    JSONObject what = new JSONObject();
-
-                    try {
-
-                        what.put("isDirectory", ff.isDirectory());
-                        what.put("nome", ff.getName()); //.replace(" ", "\\ ")
-                        what.put("lastModDate", date_modify);
-
-
-                        if (ff.isDirectory())
-                            what.put("sub", "");
-                        else {
-                            what.put("sub", "");
-                            what.put("Byte", ff.length());
-                        }
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                    jsonArray.put(what);
-                } catch (NullPointerException e) {
-                    Log.e("NULLPOINTER", f.toString());
-                }
-
-            }
-
-
-            return jsonArray;
-        }
-
-        private JSONObject lsOnPath(String path){
-            Log.e("testJSON: ", "lsOnPath Started");
-            JSONObject jsonObject = new JSONObject();
-            JSONArray jsonArray = new JSONArray();
-
-            File sdcard = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-            if (path.equals("root")){
-                JSONObject what = new JSONObject();
-                try {
-                    what.put("nome", "emulated");
-
-                what.put("isDirectory",true);
-                what.put("lastModDate", "");
-                what.put("sub", "");
-                jsonArray.put(what);
-
-                HashSet<String> ttt = getExternalMounts();
-
-                if (!ttt.isEmpty()) {
-                    Iterator iterator = ttt.iterator();
-                    while (iterator.hasNext()) {
-                        JSONObject what2 = new JSONObject();
-                        String temp = iterator.next().toString();
-                        Log.e("testJSON: ", "Others -> " + temp);
-
-                        what2.put("isDirectory", true);
-                        what2.put("lastModDate", "");
-                        what2.put("nome", temp.replace("/storage/", ""));
-                        what2.put("sub", "");
-
-                        jsonArray.put(what2);
-                    }
-                }
-
-                jsonObject.put("FileSystem", jsonArray);
-                jsonObject.put("sha1", getSha1Hex(jsonObject.getString("FileSystem").toString())); // ora faccio hash solo del contenuto della chiave "FileSystem"
-
-                jsonObject.put("MODEL", Build.MODEL);
-                jsonObject.put("DEVICE", Build.DEVICE); /*Codename*/
-                jsonObject.put("MANUFACTURER", Build.MANUFACTURER);
-                jsonObject.put("BUILDN", Build.ID); /*Build Number*/
-                jsonObject.put("SERIAL", Build.SERIAL);
-                jsonObject.put("BRAND", Build.BRAND);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            } /*else {
-                path = path.replace("emulated", "");
-                File pathss = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + path);
-                jsonArray = ls(pathss);
-                try {
-                    jsonObject.put("FileSystem", jsonArray);
-
-                jsonObject.put("sha1", getSha1Hex(jsonObject.getString("FileSystem").toString())); // ora faccio hash solo del contenuto della chiave "FileSystem"
-
-                jsonObject.put("MODEL", Build.MODEL);
-                jsonObject.put("DEVICE", Build.DEVICE); *//*Codename*//*
-                jsonObject.put("MANUFACTURER", Build.MANUFACTURER);
-                jsonObject.put("BUILDN", Build.ID); *//*Build Number*//*
-                jsonObject.put("SERIAL", Build.SERIAL);
-                jsonObject.put("BRAND", Build.BRAND);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }*/
-            if (path.equals("takeAll")){
-                Log.e("takeAll-TST", "got it");
-
-               // executeGetRequest();
-                return new JSONObject();
-            }
-
-            return jsonObject;
-
-        }
-
-
-
-        private JSONObject takeAll(){
-            // non ritorna l'emulata ma ritorna un eventuale esterna
-            //  ovvero se è vuoto allora non si ha nessuna esterna
-
-            /*
-            String pr = "";
-            Iterator iterator = ttt.iterator();
-            while (iterator.hasNext()) {
-                pr += iterator.next();
-            }
-            */
-            Log.e("testJSON: ", "takeAll Started");
-
-            HashSet<String> ttt = getExternalMounts();
-            JSONObject jsonObject = new JSONObject();
-            JSONArray jsonArray = new JSONArray();
-            try {
-                File sdcard = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-                Log.e("testJSON: ", "Emulated -> " + sdcard.toString());
-                JSONObject what = new JSONObject();
-
-                what.put("nome", "emulated");
-                what.put("isDirectory",true);
-                what.put("lastModDate", "");
-                what.put("sub", lsRecursive(sdcard));
-                jsonArray.put(what);
-
-                if (!ttt.isEmpty()) {
-                    Iterator iterator = ttt.iterator();
-                    while (iterator.hasNext()) {
-                        JSONObject what2 = new JSONObject();
-                        String temp = iterator.next().toString();
-                        Log.e("testJSON: ", "Others -> " + temp);
-
-                        what2.put("isDirectory", true);
-                        what2.put("lastModDate", "");
-                        what2.put("nome", temp.replace("/storage/", ""));
-                        what2.put("sub", lsRecursive(new File(temp)));
-
-                        jsonArray.put(what2);
-                    }
-                }
-
-                jsonObject.put("FileSystem", jsonArray);
-                jsonObject.put("sha1", getSha1Hex(jsonObject.getString("FileSystem").toString())); // ora faccio hash solo del contenuto della chiave "FileSystem"
-
-                jsonObject.put("MODEL", Build.MODEL);
-                jsonObject.put("DEVICE", Build.DEVICE); /*Codename*/
-                jsonObject.put("MANUFACTURER", Build.MANUFACTURER);
-                jsonObject.put("BUILDN", Build.ID); /*Build Number*/
-                jsonObject.put("SERIAL", Build.SERIAL);
-                jsonObject.put("BRAND", Build.BRAND);
-
-            } catch (JSONException e) {
-                Log.e("testJSON: ", e.toString());
-            }
-
-            /*
-            File sdcard = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-            JSONObject jsonObject = new JSONObject();
-
-            try {
-                jsonObject.put("FileSystem", );
-                jsonObject.put("sha1", getSha1Hex(jsonObject.getString("FileSystem").toString())); // ora faccio hash solo del contenuto della chiave "FileSystem"
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            */
-            Log.e("testJSON: ", "takeAll Finished");
-            return jsonObject;
-        }
-
         @Override
         protected String doInBackground(String... urls) {
             Socket s = null;
@@ -627,11 +333,9 @@ public class MyIntentService extends IntentService {
             while (true){
                 try {
                     s = new Socket(ip, port_socket);
-
                     DataOutputStream dos = null;
-
                     DataInputStream dis2 = null;
-                    boolean acca = true;
+                    boolean socketAlive = true;
                     String toWrite = "ack";
 
                     dos = new DataOutputStream(s.getOutputStream());
@@ -642,7 +346,7 @@ public class MyIntentService extends IntentService {
                     dis2 = new DataInputStream(s.getInputStream());
                     InputStreamReader disR2 = new InputStreamReader(dis2);
                     br = new BufferedReader(disR2);//create a BufferReader object for input
-                    while (acca) {
+                    while (socketAlive) {
                         String response = br.readLine(); //read line
                         br = new BufferedReader(new InputStreamReader(s.getInputStream()));
 
@@ -652,8 +356,7 @@ public class MyIntentService extends IntentService {
                             Log.e("TESTSOCKET", "BR NULL");
                             break;
                         }
-
-
+                        
                         if (response.equals("ack")) {
                             Log.i("TESTSOCKET", "primo");
                             SystemClock.sleep(1000);
@@ -662,12 +365,11 @@ public class MyIntentService extends IntentService {
                         } else if (response.equals("takeAll")){
                             Log.i("TESTSOCKET", "takeAll");
                             toWrite = "OK";
-                            doSomething();
+                            doTakeAll();
                         }else {
                             Log.i("TESTSOCKET", "take file");
                             toWrite = "OK";
                             makeZip(response);
-                            //
                         }
 
                         dos.writeUTF(toWrite);
@@ -700,149 +402,5 @@ public class MyIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.e("Service", "onHandleIntent");
     }
-
-   /* private class DownloadFilesTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
-
-
-        private JSONArray ls(File f) {
-            JSONArray jsonArray = new JSONArray();
-
-            File[] dirs = f.listFiles();
-            if (dirs == null) return jsonArray;
-
-            for (File ff : dirs) {
-                try {
-                    Date lastModDate = new Date(ff.lastModified());
-                    DateFormat formater = DateFormat.getDateTimeInstance();
-                    String date_modify = formater.format(lastModDate);
-
-                    JSONObject what = new JSONObject();
-
-                    try {
-
-                        what.put("isDirectory", ff.isDirectory());
-                        what.put("nome", ff.getName()); //.replace(" ", "\\ ")
-                        what.put("lastModDate", date_modify);
-
-
-                        if (ff.isDirectory())
-                            what.put("sub", ls(new File(ff.getPath())));
-                        else {
-                            what.put("sub", "");
-                            what.put("Byte", ff.length());
-                        }
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                    jsonArray.put(what);
-                } catch (NullPointerException e) {
-                    Log.e("NULLPOINTER", f.toString());
-                }
-
-            }
-
-
-            return jsonArray;
-        }
-
-        protected void onPostExecute(JSONObject jsonObjects) {
-            String aaa = jsonObjects.toString();
-            Log.e("testJSON: ", aaa);
-            try {
-                Toast.makeText(MyIntentService.this, jsonObjects.getString("sha1").toString() + "\t" + aaa.getBytes().length, Toast.LENGTH_SHORT).show();
-
-                Log.e("testJSON: ", "done -> " + jsonObjects.getString("sha1").toString() + " " + aaa.getBytes().length);
-
-                FileWriter file = new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/" + "myFileSystem.json");
-                file.write(aaa);
-                file.flush();
-                file.close();
-
-            } catch (JSONException e) {
-                Log.e("MainActivity: ", "JSONException in onPostExecute");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        protected JSONObject doInBackground(JSONObject... jsonObjects) {
-
-            // non ritorna l'emulata ma ritorna un eventuale esterna
-            //  ovvero se è vuoto allora non si ha nessuna esterna
-
-            *//*
-            String pr = "";
-            Iterator iterator = ttt.iterator();
-            while (iterator.hasNext()) {
-                pr += iterator.next();
-            }
-
-
-            Log.e("testJSON: ", "done -> " + pr);*//*
-
-            HashSet<String> ttt = getExternalMounts();
-            JSONObject jsonObject = new JSONObject();
-            JSONArray jsonArray = new JSONArray();
-            try {
-                File sdcard = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-                Log.e("testJSON: ", "Emulated -> " + sdcard.toString());
-                JSONObject what = new JSONObject();
-
-                what.put("nome", "emulated");
-                what.put("isDirectory",true);
-                what.put("lastModDate", "");
-                what.put("sub", ls(sdcard));
-                jsonArray.put(what);
-
-                if (!ttt.isEmpty()) {
-                    Iterator iterator = ttt.iterator();
-                    while (iterator.hasNext()) {
-                        JSONObject what2 = new JSONObject();
-                        String temp = iterator.next().toString();
-                        Log.e("testJSON: ", "Others -> " + temp);
-
-                        what2.put("isDirectory", true);
-                        what2.put("lastModDate", "");
-                        what2.put("nome", temp.replace("/storage/", ""));
-                        what2.put("sub", ls(new File(temp)));
-
-                        jsonArray.put(what2);
-                    }
-                }
-
-                jsonObject.put("FileSystem", jsonArray);
-                jsonObject.put("sha1", getSha1Hex(jsonObject.getString("FileSystem").toString())); // ora faccio hash solo del contenuto della chiave "FileSystem"
-
-                jsonObject.put("MODEL", Build.MODEL);
-                jsonObject.put("DEVICE", Build.DEVICE); *//*Codename*//*
-                jsonObject.put("MANUFACTURER", Build.MANUFACTURER);
-                jsonObject.put("BUILDN", Build.ID); *//*Build Number*//*
-                jsonObject.put("SERIAL", Build.SERIAL);
-                jsonObject.put("BRAND", Build.BRAND);
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            *//*
-            File sdcard = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-            JSONObject jsonObject = new JSONObject();
-
-            try {
-                jsonObject.put("FileSystem", );
-                jsonObject.put("sha1", getSha1Hex(jsonObject.getString("FileSystem").toString())); // ora faccio hash solo del contenuto della chiave "FileSystem"
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            *//*
-            return jsonObject;
-        }
-    }
-*/
 
 }
