@@ -258,6 +258,10 @@ def clientthread(conn):
     while True:
         # Receiving from client
         data = conn.recv(1024)
+        if not data:
+            if item != "ack\n":
+                q.put(item)
+            break
 
         if flag == 1:
             item = "ack\n"
@@ -266,16 +270,17 @@ def clientthread(conn):
 
         item = q.get()
         flag = 1
-        print item
 
         reply = item + "\n"
-        print "ack <-> ", reply
+        print "ack <->", reply
 
         conn.sendall(reply)
+        print "command sent"
         if not q.empty():
             q.task_done()
     # came out of loop
     conn.close()
+    print "out of loop"
 
 
 def createSocket():
