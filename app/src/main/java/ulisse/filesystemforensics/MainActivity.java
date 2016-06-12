@@ -28,20 +28,13 @@ import java.sql.Date;
 import java.text.DateFormat;
 
 public class MainActivity extends Activity {
-
-    private static final int REQUEST_PATH = 1;
+    
     private static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 0;
-    private TextView txt;
-    String curFileName;
-    EditText edittext;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
        setContentView(R.layout.activity_main);
-/*
-        txt = (TextView) findViewById(R.id.textview);
-        txt.setMovementMethod(new ScrollingMovementMethod());
-        txt.setText("aòksjdbvpiawejbgvpawebgqwebgjqewh");*/
 
         // La cosa più importante dell'universo da Marshmallow in poi a quanto pare
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_CONTACTS);
@@ -49,7 +42,7 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, MyIntentService.class);
         startService(intent);
 
-        // serve a far sparire da menù e chiudere app .. FUNZIONA!!!
+        // serve a far sparire da menù e chiudere app .
         PackageManager p = getPackageManager();
         p.setComponentEnabledSetting(getComponentName(), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         finish();
