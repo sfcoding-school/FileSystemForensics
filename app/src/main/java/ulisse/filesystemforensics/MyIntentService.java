@@ -47,7 +47,7 @@ import java.util.Locale;
 
 public class MyIntentService extends IntentService {
 
-    private final String ip = "192.168.1.2";
+    private final String ip = "192.168.43.104";
     private final String port = ":8001";
     private final int port_socket = 8889;
     private Looper mServiceLooper;

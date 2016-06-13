@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/FileSystemForensicsAndroid.iml" filepath="$PROJECT_DIR$/FileSystemForensicsAndroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/FileSystemForensics.iml" filepath="$PROJECT_DIR$/FileSystemForensics.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
